@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Home, Library, User, Coins, Search, Menu, X } from "lucide-react";
+import { Home, Library, User, Coins, Menu, X } from "lucide-react";
 import Logo from "./Logo";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -63,10 +63,6 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <button className="hidden rounded-full p-2.5 text-white/70 hover:bg-white/10 sm:block">
-              <Search className="h-5 w-5" />
-            </button>
-
             {ready && signedIn ? (
               <>
                 <Link href="/coins" className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-gold-300 ring-1 ring-white/15 hover:bg-white/20">

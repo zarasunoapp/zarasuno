@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, KeyRound, ArrowRight, Loader2, Eye, EyeOff, Star, Sparkles, Quote } from "lucide-react";
+import { Mail, KeyRound, ArrowRight, Loader2, Eye, EyeOff, Star, Quote } from "lucide-react";
 import Logo from "@/components/Logo";
 import { createClient } from "@/lib/supabase/client";
 
@@ -117,11 +117,6 @@ export default function LoginPage() {
           </div>
 
           <div className="rounded-3xl bg-white p-6 shadow-card ring-1 ring-black/5 sm:p-8">
-            <div className="mb-5 flex items-center gap-2 rounded-xl bg-brand-50 px-4 py-3 text-center text-xs text-brand-700">
-              <Sparkles className="h-4 w-4 shrink-0 text-gold-500" />
-              <span>Demo login → <b>demo@zarasuno.app</b> / <b>ZaraSuno123!</b></span>
-            </div>
-
             {/* mode tabs */}
             <div className="flex rounded-full bg-gray-100 p-1 text-sm font-medium">
               {(["password", "otp"] as const).map((m) => (

@@ -3,14 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Apple, Play, ArrowRight, Globe, Send, MessageCircle, MapPin, Sparkles, Leaf } from "lucide-react";
+import { Apple, Play, ArrowRight, Facebook, Instagram, MapPin, Sparkles, Leaf } from "lucide-react";
 import Logo from "./Logo";
 import Curve from "./Curve";
 
 const CONTACT_LINKS = [
-  { label: "Our website", icon: Globe, href: "#" },
-  { label: "ZaraSuno on Facebook", icon: MessageCircle, href: "#" },
-  { label: "ZaraSuno on Telegram", icon: Send, href: "#" },
+  { label: "ZaraSuno on Facebook", icon: Facebook, href: "#" },
+  { label: "ZaraSuno on Instagram", icon: Instagram, href: "#" },
 ];
 
 export default function Footer() {
@@ -40,7 +39,7 @@ export default function Footer() {
           </div>
           <p className="mx-auto mt-8 flex max-w-xl items-start justify-center gap-2 text-center text-sm leading-relaxed text-gray-500">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
-            Our address — ZaraSuno HQ, Lahore, Pakistan. Serving listeners across the world.
+            Sydney, Australia — serving listeners across the world.
           </p>
         </div>
       </section>
