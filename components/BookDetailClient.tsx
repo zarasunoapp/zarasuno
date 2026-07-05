@@ -5,13 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
-  Play, Lock, Heart, Download, Star, Clock, ListMusic, Coins, Check, ChevronLeft, Share2, Headphones,
+  Play, Lock, Heart, Download, Star, Clock, ListMusic, Coins, Check, ChevronLeft, Headphones,
 } from "lucide-react";
 import type { Author, Book, Chapter } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { cn, formatDuration, formatClock, formatCount } from "@/lib/utils";
 import Curve from "./Curve";
 import Carousel from "./Carousel";
+import ShareMenu from "./ShareMenu";
+import DownloadSheet from "./DownloadSheet";
 
 export default function BookDetailClient({
   book,
@@ -30,6 +32,7 @@ export default function BookDetailClient({
   const { signedIn, coins, isBookUnlocked, unlockBook, isFavourite, toggleFavourite } = useStore();
   const [toast, setToast] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showDownload, setShowDownload] = useState(false);
 
   const unlocked = isBookUnlocked(book.id, book.is_free);
   const fav = isFavourite(book.id);
@@ -50,13 +53,13 @@ export default function BookDetailClient({
     else flash("Something went wrong. Please try again.");
   };
 
-  const handleDownload = () => {
-    if (!unlocked) return router.push("/coins?need=" + book.coin_price);
-    flash("Preparing offline download…");
-  };
-
   const previewIndex = chapters.findIndex((c) => c.is_preview);
   const hasPreview = previewIndex >= 0;
+
+  const handleDownload = () => {
+    if (unlocked || hasPreview) setShowDownload(true);
+    else router.push("/coins?need=" + book.coin_price);
+  };
 
   // Navigate to the player. Allowed if unlocked, or if the target (or any)
   // chapter is a free preview.
@@ -149,7 +152,7 @@ export default function BookDetailClient({
                   <Heart className={cn("h-5 w-5", fav && "fill-rose-500 text-rose-500")} />
                 </IconBtn>
                 <IconBtn onClick={handleDownload}><Download className="h-5 w-5" /></IconBtn>
-                <IconBtn onClick={() => flash("Link copied to clipboard")}><Share2 className="h-5 w-5" /></IconBtn>
+                <ShareMenu bookId={book.id} title={book.title} />
               </div>
             </div>
           </div>
@@ -240,6 +243,14 @@ export default function BookDetailClient({
         <div className="mx-auto mt-14 max-w-[88rem]">
           <Carousel eyebrow="Keep exploring" title="Listeners also enjoyed" books={related} />
         </div>
+      )}
+
+      {showDownload && (
+        <DownloadSheet
+          chapters={chapters}
+          canDownload={(i) => unlocked || !!chapters[i]?.is_preview}
+          onClose={() => setShowDownload(false)}
+        />
       )}
 
       {toast && (
