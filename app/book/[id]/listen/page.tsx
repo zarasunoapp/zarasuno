@@ -4,7 +4,13 @@ import PlayerClient from "@/components/PlayerClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function ListenPage({ params }: { params: { id: string } }) {
+export default async function ListenPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { ch?: string };
+}) {
   const book = await getBookById(params.id);
   if (!book) notFound();
   const [chapters, author] = await Promise.all([
@@ -12,5 +18,7 @@ export default async function ListenPage({ params }: { params: { id: string } })
     getAuthorById(book.author_id),
   ]);
 
-  return <PlayerClient book={book} author={author} chapters={chapters} />;
+  const initialIndex = Math.max(0, Math.min(chapters.length - 1, Number(searchParams.ch ?? 0) || 0));
+
+  return <PlayerClient book={book} author={author} chapters={chapters} initialIndex={initialIndex} />;
 }

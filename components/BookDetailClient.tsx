@@ -55,8 +55,17 @@ export default function BookDetailClient({
     flash("Preparing offline download…");
   };
 
-  const handleListen = () => {
-    if (unlocked) router.push(`/book/${book.id}/listen`);
+  const previewIndex = chapters.findIndex((c) => c.is_preview);
+  const hasPreview = previewIndex >= 0;
+
+  // Navigate to the player. Allowed if unlocked, or if the target (or any)
+  // chapter is a free preview.
+  const goListen = (chapterIndex?: number) => {
+    const targetIsPreview =
+      chapterIndex != null ? !!chapters[chapterIndex]?.is_preview : hasPreview;
+    if (!unlocked && !targetIsPreview) return;
+    const i = chapterIndex ?? (unlocked ? 0 : previewIndex);
+    router.push(`/book/${book.id}/listen${i > 0 ? `?ch=${i}` : ""}`);
   };
 
   return (
@@ -109,14 +118,20 @@ export default function BookDetailClient({
               {/* actions */}
               <div className="mt-7 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
                 {unlocked ? (
-                  <button onClick={handleListen} className="btn-green flex items-center gap-2 rounded-full px-7 py-3.5 text-base font-semibold">
+                  <button onClick={() => goListen()} className="btn-green flex items-center gap-2 rounded-full px-7 py-3.5 text-base font-semibold">
                     <Play className="h-5 w-5 fill-current" /> Listen now
                   </button>
                 ) : (
                   <>
-                    <button disabled className="flex cursor-not-allowed items-center gap-2 rounded-full bg-white/10 px-7 py-3.5 text-base font-semibold text-white/40 ring-1 ring-white/10">
-                      <Play className="h-5 w-5" /> Listen
-                    </button>
+                    {hasPreview ? (
+                      <button onClick={() => goListen(previewIndex)} className="btn-green flex items-center gap-2 rounded-full px-7 py-3.5 text-base font-semibold">
+                        <Play className="h-5 w-5 fill-current" /> Play free preview
+                      </button>
+                    ) : (
+                      <button disabled className="flex cursor-not-allowed items-center gap-2 rounded-full bg-white/10 px-7 py-3.5 text-base font-semibold text-white/40 ring-1 ring-white/10">
+                        <Play className="h-5 w-5" /> Listen
+                      </button>
+                    )}
                     {!book.is_free && (
                       <button onClick={handleUnlock} disabled={busy} className="btn-gold flex items-center gap-2 rounded-full px-6 py-3.5 text-base font-semibold disabled:opacity-60">
                         <Coins className="h-5 w-5" /> {busy ? "Unlocking…" : `Unlock · ${book.coin_price}`}
@@ -157,12 +172,12 @@ export default function BookDetailClient({
               <span className="text-sm text-gray-400">{chapters.length} episodes</span>
             </div>
             <ul className="space-y-2">
-              {chapters.map((ch) => {
+              {chapters.map((ch, i) => {
                 const playable = unlocked || ch.is_preview;
                 return (
                   <li
                     key={ch.id}
-                    onClick={() => playable && handleListen()}
+                    onClick={() => playable && goListen(i)}
                     className={cn(
                       "group flex items-center gap-4 rounded-2xl border border-brand-100/60 bg-white p-3.5 shadow-soft transition-all",
                       playable ? "cursor-pointer hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card" : "opacity-70"

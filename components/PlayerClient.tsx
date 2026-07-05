@@ -16,10 +16,12 @@ export default function PlayerClient({
   book,
   author,
   chapters,
+  initialIndex = 0,
 }: {
   book: Book;
   author: Author | null;
   chapters: Chapter[];
+  initialIndex?: number;
 }) {
   const router = useRouter();
   const { ready, isBookUnlocked } = useStore();
@@ -28,7 +30,7 @@ export default function PlayerClient({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playingRef = useRef(false);
 
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(initialIndex);
   const [playing, setPlaying] = useState(false);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
