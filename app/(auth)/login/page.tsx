@@ -104,7 +104,7 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT — form */}
-      <div className="relative flex items-center justify-center overflow-hidden bg-ivory px-5 py-12 sm:px-8">
+      <div className="relative flex items-center justify-center overflow-hidden bg-white px-5 py-12 sm:px-8">
         {/* soft blobs */}
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-100/60 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-gold-100/70 blur-3xl" />

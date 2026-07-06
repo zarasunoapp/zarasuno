@@ -7,7 +7,7 @@ export default async function ContentPage({ slug }: { slug: string }) {
   if (!page) notFound();
 
   return (
-    <div className="min-h-screen bg-ivory">
+    <div className="min-h-screen bg-white">
       {/* dark themed header — tucked under the floating navbar like the homepage hero */}
       <div className="grain relative -mt-20 overflow-hidden bg-brand-900 pb-16 pt-32 text-white sm:pt-36">
         <div className="absolute inset-0 bg-hero-mesh opacity-60" />

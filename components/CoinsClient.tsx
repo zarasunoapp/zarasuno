@@ -195,7 +195,7 @@ function Inner({ packages, configs, country }: { packages: CoinPackage[]; config
         ))}
       </div>
 
-      <div className="mt-8 rounded-3xl paper p-6 shadow-soft ring-1 ring-brand-100/50">
+      <div className="mt-8 rounded-3xl bg-white p-6 shadow-soft ring-1 ring-brand-100/50">
         <h3 className="flex items-center gap-2 font-serif text-lg font-semibold text-gray-900">
           <Ticket className="h-5 w-5 text-gold-500" /> Have a promocode?
         </h3>

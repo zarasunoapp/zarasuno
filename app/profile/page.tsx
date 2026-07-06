@@ -59,7 +59,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 pb-28 sm:px-6 md:pb-10">
+    <div className="mx-auto max-w-5xl px-4 py-10 pb-28 sm:px-6 md:pb-10">
       <div className="relative overflow-hidden rounded-3xl forest p-6 text-white shadow-card sm:p-8">
         <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-gold-400/25 blur-2xl" />
         <div className="relative flex flex-col items-center gap-5 sm:flex-row sm:items-center">

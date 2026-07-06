@@ -14,6 +14,7 @@ import Curve from "./Curve";
 import Carousel from "./Carousel";
 import CategorySelector from "./CategorySelector";
 import OnboardingModal from "./OnboardingModal";
+import ReviewsFaq from "./ReviewsFaq";
 import Reveal from "./Reveal";
 
 const SUBTITLES: Record<string, string> = {
@@ -61,7 +62,7 @@ export default function HomeClient({
 
   // Book-of-the-Day banner (signed-out only; signed-in users see it in the hero)
   const bookOfDayNode = !signedIn && bookOfDay && (
-    <div className="mx-auto max-w-[88rem] px-4 sm:px-6">
+    <div className="mx-auto max-w-[96rem] px-4 sm:px-6">
       <div className="shine group relative overflow-hidden rounded-[1.75rem] bg-brand-900 p-6 text-white shadow-card ring-1 ring-white/10 sm:p-10">
         <Image src={bookOfDay.cover_url} alt="" fill sizes="1200px" className="object-cover opacity-20 transition-transform duration-[3s] group-hover:scale-105" />
         <div className="absolute inset-0 bg-gradient-to-r from-brand-900 via-brand-900/92 to-brand-800/60" />
@@ -96,7 +97,7 @@ export default function HomeClient({
     blocks.push({
       key: s.id,
       node: (
-        <div className="mx-auto max-w-[88rem]">
+        <div className="mx-auto max-w-[96rem]">
           <Carousel eyebrow={EYEBROWS[s.type]} title={s.title} subtitle={SUBTITLES[s.type]} books={s.books} />
         </div>
       ),
@@ -105,7 +106,7 @@ export default function HomeClient({
       blocks.push({
         key: "categories",
         node: (
-          <div className="mx-auto max-w-[88rem]">
+          <div className="mx-auto max-w-[96rem]">
             <CategorySelector categories={categories} subcategories={subcategories} books={allBooks} />
           </div>
         ),
@@ -120,22 +121,22 @@ export default function HomeClient({
       ) : (
         <>
           <LandingHero covers={allBooks} />
-          <MarketingSections featured={featured} faqs={faqs} />
+          <MarketingSections featured={featured} />
         </>
       )}
 
-      {/* App-home feed — alternating green / near-white bands, each separated by a curve */}
-      <div id="app-home">
-        {blocks.map((b, i) => {
-          const green = i % 2 === 0;
-          return (
-            <section key={b.key} className={`relative py-14 ${green ? "sage" : "bg-ivory"}`}>
-              <Curve fill={green ? "#CADFCE" : "#F7F3EA"} />
-              <Reveal>{b.node}</Reveal>
-            </section>
-          );
-        })}
+      {/* App-home feed — one connected white surface */}
+      <div id="app-home" className="relative bg-white">
+        <Curve fill="#ffffff" />
+        <div className="space-y-16 py-16">
+          {blocks.map((b) => (
+            <Reveal key={b.key}>{b.node}</Reveal>
+          ))}
+        </div>
       </div>
+
+      {/* Reviews + FAQ — just above the footer (shown for everyone) */}
+      <ReviewsFaq faqs={faqs} />
 
       <OnboardingModal categories={categories} />
     </>

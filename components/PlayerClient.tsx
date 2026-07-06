@@ -36,6 +36,7 @@ export default function PlayerClient({
   const [duration, setDuration] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [buffering, setBuffering] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [showChapters, setShowChapters] = useState(false);
   const [showSpeed, setShowSpeed] = useState(false);
@@ -128,8 +129,11 @@ export default function PlayerClient({
         onTimeUpdate={(e) => setPosition(e.currentTarget.currentTime)}
         onPlay={() => { playingRef.current = true; setPlaying(true); }}
         onPause={() => { playingRef.current = false; setPlaying(false); }}
+        onWaiting={() => setBuffering(true)}
+        onPlaying={() => setBuffering(false)}
+        onCanPlay={() => setBuffering(false)}
         onEnded={() => goNext()}
-        onError={() => { setAudioError("Audio isn't available for this chapter yet."); setLoading(false); }}
+        onError={() => { setAudioError("Audio isn't available for this chapter yet."); setLoading(false); setBuffering(false); }}
         preload="metadata"
       />
 
@@ -148,9 +152,10 @@ export default function PlayerClient({
       <div className="flex flex-1 flex-col items-center justify-center px-6">
         <div className="relative aspect-square w-full max-w-xs overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10">
           <Image src={book.cover_url} alt={book.title} fill sizes="320px" className="object-cover" priority />
-          {loading && (
-            <div className="absolute inset-0 grid place-items-center bg-black/30 backdrop-blur-sm">
-              <Loader2 className="h-8 w-8 animate-spin text-white" />
+          {(loading || buffering) && (
+            <div className="absolute inset-0 grid place-items-center gap-2 bg-black/40 backdrop-blur-sm">
+              <Loader2 className="h-9 w-9 animate-spin text-gold-300" />
+              <span className="text-xs font-medium text-white/90">{loading ? "Loading…" : "Buffering…"}</span>
             </div>
           )}
         </div>
@@ -199,7 +204,7 @@ export default function PlayerClient({
               className="grid place-items-center rounded-full bg-gold-400 text-brand-800 shadow-xl transition hover:bg-gold-300 disabled:opacity-50"
               style={{ height: "4.5rem", width: "4.5rem" }}
             >
-              {loading ? <Loader2 className="h-8 w-8 animate-spin" /> : playing ? <Pause className="h-8 w-8 fill-current" /> : <Play className="h-8 w-8 translate-x-0.5 fill-current" />}
+              {loading || buffering ? <Loader2 className="h-8 w-8 animate-spin" /> : playing ? <Pause className="h-8 w-8 fill-current" /> : <Play className="h-8 w-8 translate-x-0.5 fill-current" />}
             </button>
             <button onClick={goNext} disabled={index === chapters.length - 1 || !canPlay(index + 1)} className="grid h-12 w-12 place-items-center rounded-full text-white/80 hover:text-white disabled:opacity-30">
               <SkipForward className="h-7 w-7 fill-current" />

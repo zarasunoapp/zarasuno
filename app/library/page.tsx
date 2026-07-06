@@ -61,7 +61,7 @@ export default function LibraryPage() {
     favs.map((b) => ({ book: b, percent: 0, completed: false }));
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 pb-28 sm:px-6 md:pb-10">
+    <div className="mx-auto max-w-6xl px-4 py-10 pb-28 sm:px-6 md:pb-10">
       <h1 className="display text-3xl text-gray-900 sm:text-4xl">Your library</h1>
 
       <div className="mt-6 flex gap-2 border-b border-gray-100">

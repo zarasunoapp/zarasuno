@@ -80,7 +80,7 @@ export default function BookDetailClient({
         <div className="absolute inset-0 bg-gradient-to-b from-brand-900/85 via-brand-900/80 to-brand-900" />
         <div className="absolute inset-0 bg-hero-mesh opacity-70" />
 
-        <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="relative mx-auto max-w-[80rem] px-4 sm:px-6">
           <button
             onClick={() => router.back()}
             className="mb-6 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-2 text-sm font-medium text-white ring-1 ring-white/15 backdrop-blur transition hover:bg-white/20"
@@ -160,9 +160,9 @@ export default function BookDetailClient({
       </section>
 
       {/* ============ BODY ============ */}
-      <div className="relative bg-ivory">
-        <Curve fill="#F7F3EA" />
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 pt-8 sm:px-6 lg:grid-cols-3">
+      <div className="relative bg-white">
+        <Curve fill="#ffffff" />
+        <div className="mx-auto grid max-w-[80rem] gap-10 px-4 pt-8 sm:px-6 lg:grid-cols-3">
         <div className="space-y-10 lg:col-span-2">
           <section>
             <h2 className="font-serif text-2xl font-bold text-gray-900">About this book</h2>
@@ -240,7 +240,7 @@ export default function BookDetailClient({
       </div>
 
       {related.length > 0 && (
-        <div className="mx-auto mt-14 max-w-[88rem]">
+        <div className="mx-auto mt-14 max-w-[96rem]">
           <Carousel eyebrow="Keep exploring" title="Listeners also enjoyed" books={related} />
         </div>
       )}

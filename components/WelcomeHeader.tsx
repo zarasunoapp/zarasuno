@@ -24,7 +24,7 @@ export default function WelcomeHeader() {
   ];
 
   return (
-    <div className="animate-fade-up mx-auto max-w-7xl px-4 sm:px-6">
+    <div className="animate-fade-up mx-auto max-w-[96rem] px-4 sm:px-6">
       <div className="flex flex-col gap-6 rounded-3xl border border-brand-100/60 bg-white/70 p-6 shadow-soft backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:p-7">
         <div>
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-gold-500">

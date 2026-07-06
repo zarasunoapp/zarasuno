@@ -15,8 +15,9 @@ function greeting() {
 }
 
 export default function SignedInHero({ bookOfDay }: { bookOfDay: Book | null }) {
-  const { name, coins, favourites, unlocked } = useStore();
-  const firstName = (name || "there").split(" ")[0];
+  const { ready, name, coins, favourites, unlocked } = useStore();
+  const loaded = ready && !!name;
+  const firstName = name.split(" ")[0];
 
   const stats = [
     { icon: Coins, label: "Coins", value: coins, tint: "text-gold-300" },
@@ -31,7 +32,7 @@ export default function SignedInHero({ bookOfDay }: { bookOfDay: Book | null }) 
       <div className="pointer-events-none absolute -left-32 top-0 h-[32rem] w-[32rem] rounded-full bg-brand-500/25 blur-3xl" />
       <div className="pointer-events-none absolute right-0 top-16 h-[26rem] w-[26rem] rounded-full bg-gold-400/15 blur-3xl" />
 
-      <div className="relative mx-auto grid max-w-[88rem] items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_1.05fr]">
+      <div className="relative mx-auto grid max-w-[96rem] items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_1.05fr]">
         {/* LEFT — greeting + stats */}
         <div className="animate-fade-up">
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-gold-300">
@@ -40,7 +41,12 @@ export default function SignedInHero({ bookOfDay }: { bookOfDay: Book | null }) 
           <h1 className="display mt-3 text-4xl leading-[1] sm:text-5xl lg:text-6xl">
             Welcome back,
             <br />
-            <span className="text-gold-400">{firstName}</span> 👋
+            {loaded ? (
+              <span className="text-gold-400">{firstName}</span>
+            ) : (
+              <span className="inline-block h-[0.85em] w-48 animate-pulse rounded-xl bg-white/15 align-middle" />
+            )}{" "}
+            👋
           </h1>
           <p className="mt-4 max-w-md text-lg text-brand-100">Ready for your next chapter?</p>
 
