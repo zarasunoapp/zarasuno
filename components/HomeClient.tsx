@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import type { Book, Category, Subcategory } from "@/lib/types";
-import type { HomeSection, Faq } from "@/lib/queries";
+import type { HomeSection, Faq, FeaturedBook } from "@/lib/queries";
 import LandingHero from "./LandingHero";
 import SignedInHero from "./SignedInHero";
 import MarketingSections from "./MarketingSections";
@@ -45,6 +45,7 @@ export default function HomeClient({
   subcategories,
   bookOfDay,
   faqs,
+  featuredBooks = [],
 }: {
   signedIn: boolean;
   sections: HomeSection[];
@@ -53,8 +54,8 @@ export default function HomeClient({
   subcategories: Subcategory[];
   bookOfDay: Book | null;
   faqs?: Faq[];
+  featuredBooks?: FeaturedBook[];
 }) {
-  const featured = (sections.find((s) => s.type === "books_of_month")?.books ?? allBooks).slice(0, 3);
 
   // Build the app-home feed as an ordered list of blocks (carousels + category).
   const blocks: { key: string; node: ReactNode }[] = [];
@@ -86,7 +87,7 @@ export default function HomeClient({
       ) : (
         <>
           <LandingHero covers={allBooks} />
-          <MarketingSections featured={featured} />
+          <MarketingSections featured={featuredBooks} />
         </>
       )}
 

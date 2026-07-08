@@ -121,7 +121,13 @@ export default function PlayerClient({
   const nudge = (s: number) => seek(Math.max(0, Math.min(duration || 0, position + s)));
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-gradient-to-b from-brand-800 via-brand-700 to-brand-900 text-white">
+    <div className="grain fixed inset-0 z-50 flex flex-col overflow-y-auto bg-brand-900 text-white">
+      {/* hero-matching background */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-900 via-brand-800 to-brand-900" />
+      <div className="pointer-events-none absolute inset-0 bg-hero-mesh" />
+      <div className="pointer-events-none absolute -left-32 top-0 h-[32rem] w-[32rem] rounded-full bg-brand-500/25 blur-3xl" />
+      <div className="pointer-events-none absolute right-0 top-16 h-[26rem] w-[26rem] rounded-full bg-gold-400/15 blur-3xl" />
+
       {/* real audio element */}
       <audio
         ref={audioRef}
@@ -138,7 +144,7 @@ export default function PlayerClient({
       />
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-5 py-4">
+      <div className="relative z-10 flex items-center justify-between px-5 py-4">
         <button onClick={() => router.push(`/book/${book.id}`)} className="grid h-10 w-10 place-items-center rounded-full bg-white/10 hover:bg-white/20">
           <ChevronDown className="h-5 w-5" />
         </button>
@@ -149,7 +155,7 @@ export default function PlayerClient({
       </div>
 
       {/* Cover */}
-      <div className="flex flex-1 flex-col items-center justify-center px-6">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6">
         <div className="relative aspect-square w-full max-w-xs overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10">
           <Image src={book.cover_url} alt={book.title} fill sizes="320px" className="object-cover" priority />
           {(loading || buffering) && (

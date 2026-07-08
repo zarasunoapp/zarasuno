@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
 
-  const { packageId } = await req.json().catch(() => ({}));
+  const { packageId, promoCode } = await req.json().catch(() => ({}));
   const { data: pkg } = await supabase
     .from("coin_packages")
     .select("*")
@@ -25,22 +25,36 @@ export async function POST(req: Request) {
   const coins = (pkg.coin_amount ?? 0) + (pkg.bonus_coins ?? 0);
   const currency = String(pkg.currency ?? "USD").toLowerCase();
 
+  // Re-validate any discount code server-side — never trust the client price.
+  let amount = Number(pkg.price);
+  let promocodeId: string | null = null;
+  if (promoCode) {
+    const { data: v } = await supabase.rpc("validate_discount_promo", {
+      p_code: String(promoCode).trim(),
+      p_package_id: pkg.id,
+    });
+    if (!v?.success) return NextResponse.json({ error: "promo_invalid", reason: v?.error }, { status: 400 });
+    amount = Number(v.final_price);
+    promocodeId = v.promocode_id;
+  }
+
   try {
     const intent = await stripe.paymentIntents.create({
-      amount: Math.round(Number(pkg.price) * 100),
+      amount: Math.round(amount * 100),
       currency,
       payment_method_types: ["card"],
       metadata: {
         user_id: user.id,
         package_id: pkg.id,
         coins: String(coins),
-        amount: String(pkg.price),
+        amount: String(amount),
+        promocode_id: promocodeId ?? "",
       },
     });
     return NextResponse.json({
       clientSecret: intent.client_secret,
       coins,
-      amount: Number(pkg.price),
+      amount,
       currency: pkg.currency,
     });
   } catch (err: any) {

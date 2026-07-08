@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Play, Coins, Heart, BookOpen, Sparkles, Library, ArrowRight } from "lucide-react";
+import { Play, Coins, Sparkles, Library, ArrowRight } from "lucide-react";
 import type { Book } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { formatDuration } from "@/lib/utils";
@@ -15,15 +15,9 @@ function greeting() {
 }
 
 export default function SignedInHero({ bookOfDay }: { bookOfDay: Book | null }) {
-  const { ready, name, coins, favourites, unlocked } = useStore();
+  const { ready, name } = useStore();
   const loaded = ready && !!name;
   const firstName = name.split(" ")[0];
-
-  const stats = [
-    { icon: Coins, label: "Coins", value: coins, tint: "text-gold-300" },
-    { icon: BookOpen, label: "Unlocked", value: unlocked.length, tint: "text-brand-200" },
-    { icon: Heart, label: "Favourites", value: favourites.length, tint: "text-rose-300" },
-  ];
 
   return (
     <section className="grain relative -mt-20 overflow-hidden bg-brand-900 pb-16 pt-32 text-white sm:pt-36">
@@ -50,24 +44,11 @@ export default function SignedInHero({ bookOfDay }: { bookOfDay: Book | null }) 
           </h1>
           <p className="mt-4 max-w-md text-lg text-brand-100">Ready for your next chapter?</p>
 
-          {/* stat chips */}
-          <div className="mt-7 flex flex-wrap gap-3">
-            {stats.map(({ icon: Icon, label, value, tint }) => (
-              <div key={label} className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/15 backdrop-blur">
-                <Icon className={`h-5 w-5 ${tint}`} />
-                <div>
-                  <p className="font-serif text-lg font-bold leading-none">{value}</p>
-                  <p className="text-[10px] uppercase tracking-wide text-brand-100">{label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link href="/library" className="btn-gold flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold">
-              <Library className="h-4 w-4" /> Continue in library
+          <div className="mt-8 flex gap-3">
+            <Link href="/library" className="btn-gold flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold sm:flex-none">
+              <Library className="h-4 w-4" /> Go to library
             </Link>
-            <Link href="/coins" className="flex items-center gap-2 rounded-full bg-white/10 px-6 py-3.5 text-sm font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/15">
+            <Link href="/coins" className="flex flex-1 items-center justify-center gap-2 rounded-full bg-white/10 px-6 py-3.5 text-sm font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/15 sm:flex-none">
               <Coins className="h-4 w-4" /> Top up coins
             </Link>
           </div>

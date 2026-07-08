@@ -35,6 +35,7 @@ export async function GET(req: Request) {
     p_amount: Number(m.amount ?? 0),
     p_package_id: m.package_id || null,
     p_reference: session.id,
+    p_promocode_id: m.promocode_id || null,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

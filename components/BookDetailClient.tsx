@@ -5,14 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
-  Play, Lock, Heart, Download, Star, Clock, ListMusic, Coins, Check, ChevronLeft, Headphones,
+  Play, Lock, Heart, Download, Clock, ListMusic, Coins, Check, ChevronLeft,
 } from "lucide-react";
 import type { Author, Book, Chapter } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { cn, formatDuration, formatClock, formatCount } from "@/lib/utils";
+import { cn, formatDuration, formatClock } from "@/lib/utils";
 import Curve from "./Curve";
 import Carousel from "./Carousel";
 import ShareMenu from "./ShareMenu";
+import Avatar from "./Avatar";
 import DownloadSheet from "./DownloadSheet";
 
 export default function BookDetailClient({
@@ -112,10 +113,8 @@ export default function BookDetailClient({
               <p className="mt-2 text-sm font-medium text-brand-100">by {author?.name}</p>
 
               <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-brand-100 sm:justify-start">
-                <span className="flex items-center gap-1.5 font-semibold text-gold-300"><Star className="h-4 w-4 fill-current" /> {book.rating.toFixed(1)}</span>
-                <span className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-brand-300" /> {formatDuration(book.duration_seconds)}</span>
-                <span className="flex items-center gap-1.5"><ListMusic className="h-4 w-4 text-brand-300" /> {book.chapter_count} chapters</span>
-                <span className="flex items-center gap-1.5"><Headphones className="h-4 w-4 text-brand-300" /> {formatCount(book.listen_count)} plays</span>
+                <span className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-gold-300" /> {formatDuration(book.duration_seconds)}</span>
+                <span className="flex items-center gap-1.5"><ListMusic className="h-4 w-4 text-gold-300" /> {book.chapter_count} chapters</span>
               </div>
 
               {/* actions */}
@@ -224,9 +223,7 @@ export default function BookDetailClient({
             <div className="relative">
               <h2 className="font-serif text-lg font-semibold">About the author</h2>
               <div className="mt-4 flex items-center gap-3">
-                {author?.avatar_url && (
-                  <Image src={author.avatar_url} alt={author.name} width={56} height={56} className="h-14 w-14 rounded-full object-cover ring-2 ring-gold-400/40" />
-                )}
+                <Avatar name={author?.name || "Author"} size={56} className="shrink-0 ring-2 ring-gold-400/40" />
                 <div>
                   <p className="font-semibold">{author?.name}</p>
                   <p className="text-xs text-brand-200">Author</p>

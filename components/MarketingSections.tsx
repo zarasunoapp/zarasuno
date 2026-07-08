@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Leaf, ArrowRight, Library, Coins, Heart, Headphones } from "lucide-react";
-import type { Book } from "@/lib/types";
+import type { FeaturedBook } from "@/lib/queries";
 import Curve from "./Curve";
 
 const IMG = (id: string, w = 900) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
@@ -15,38 +15,44 @@ const FEATURES = [
   { label: "Free chapters to sample", desc: "The first chapter of every book is free — try before you unlock.", kind: "text-green" },
 ];
 
-export default function MarketingSections({ featured }: { featured: Book[] }) {
+export default function MarketingSections({ featured }: { featured: FeaturedBook[] }) {
   return (
     <>
-      {/* FEATURED BOOKS — white band, covers only (first) */}
-      <section className="relative bg-white py-14">
-        <Curve fill="#ffffff" />
-        <div className="mx-auto max-w-[96rem] px-4 sm:px-6">
-          <div className="mb-8 flex items-center justify-center gap-3">
-            <Headphones className="h-6 w-6 text-brand-500" />
-            <h2 className="display text-3xl uppercase text-brand-700 sm:text-4xl">featured books</h2>
-            <Headphones className="h-6 w-6 -scale-x-100 text-brand-500" />
-          </div>
+      {/* FEATURED BOOKS — white band, images only (from featured_books) */}
+      {featured.length > 0 && (
+        <section className="relative bg-white py-14">
+          <Curve fill="#ffffff" />
+          <div className="mx-auto max-w-[96rem] px-4 sm:px-6">
+            <div className="mb-8 flex items-center justify-center gap-3">
+              <Headphones className="h-6 w-6 text-brand-500" />
+              <h2 className="display text-3xl uppercase text-brand-700 sm:text-4xl">featured books</h2>
+              <Headphones className="h-6 w-6 -scale-x-100 text-brand-500" />
+            </div>
 
-          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
-            {featured.map((b) => (
-              <Link
-                key={b.id}
-                href={`/book/${b.id}`}
-                className="group relative aspect-square overflow-hidden rounded-3xl shadow-card ring-1 ring-black/5 transition-all hover:-translate-y-1.5 hover:shadow-cardHover"
-              >
-                <Image
-                  src={b.cover_url}
-                  alt={b.title}
-                  fill
-                  sizes="(max-width:640px) 45vw, 33vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </Link>
-            ))}
+            {/* horizontal scroll on mobile, grid on larger screens */}
+            <div className="no-scrollbar -mx-4 flex snap-x gap-5 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0">
+              {featured.map((f) => {
+                const img = (
+                  /* image_url is admin-controlled (any host) — plain img avoids next/image domain limits */
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={f.image_url}
+                    alt={f.title ?? "Featured book"}
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                );
+                const cls = "group relative aspect-square w-56 shrink-0 snap-start overflow-hidden rounded-3xl shadow-card ring-1 ring-black/5 transition-all hover:-translate-y-1.5 hover:shadow-cardHover sm:w-auto";
+                return f.book_id ? (
+                  <Link key={f.id} href={`/book/${f.book_id}`} className={cls}>{img}</Link>
+                ) : (
+                  <div key={f.id} className={cls}>{img}</div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* WHY LISTENERS CHOOSE US — dark hero-style band */}
       <section id="why" className="grain relative bg-brand-900 py-16 text-white">

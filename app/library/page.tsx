@@ -36,10 +36,10 @@ export default function LibraryPage() {
       if (!user) return;
       const [prog, fav] = await Promise.all([
         supabase.from("listening_progress")
-          .select("position_seconds, is_completed, last_listened_at, books(*, authors(name))")
+          .select("position_seconds, is_completed, last_listened_at, books(*, authors!books_author_id_fkey(name))")
           .eq("user_id", user.id).order("last_listened_at", { ascending: false }),
         supabase.from("favourites")
-          .select("books(*, authors(name))").eq("user_id", user.id),
+          .select("books(*, authors!books_author_id_fkey(name))").eq("user_id", user.id),
       ]);
       setProgress((prog.data ?? []).filter((r: any) => r.books).map((r: any) => ({
         book: r.books,

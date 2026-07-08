@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, User, KeyRound, ArrowRight, Loader2, CheckCircle2, Eye, EyeOff, Star, Quote } from "lucide-react";
+import { Mail, User, KeyRound, ArrowRight, Loader2, CheckCircle2, Eye, EyeOff, Star, Quote, Phone } from "lucide-react";
 import Logo from "@/components/Logo";
 import { createClient } from "@/lib/supabase/client";
 
@@ -11,6 +11,7 @@ export default function SignupPage() {
   const supabase = createClient();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +23,7 @@ export default function SignupPage() {
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email, password,
-      options: { data: { full_name: fullName }, emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined },
+      options: { data: { full_name: fullName, phone: phone.trim() || null }, emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined },
     });
     setLoading(false);
     if (error) return setError(error.message);
@@ -113,6 +114,10 @@ export default function SignupPage() {
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                   <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-3.5 pl-12 pr-4 text-sm outline-none transition focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand-100" />
+                </div>
+                <div className="relative">
+                  <Phone className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone number (optional)" className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-3.5 pl-12 pr-4 text-sm outline-none transition focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand-100" />
                 </div>
                 <div className="relative">
                   <KeyRound className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />

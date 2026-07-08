@@ -14,19 +14,21 @@ interface Store {
   email: string;
   country: string;
   language: string;
+  languages: string[];
   coins: number;
   favourites: string[];
   unlocked: string[];
   selectedCategories: string[];
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
-  completeOnboarding: (categoryIds: string[]) => Promise<void>;
+  completeOnboarding: (categoryIds: string[], languageCodes: string[]) => Promise<void>;
   toggleFavourite: (bookId: string) => Promise<void>;
   isFavourite: (bookId: string) => boolean;
   isBookUnlocked: (bookId: string, isFree?: boolean) => boolean;
   unlockBook: (bookId: string) => Promise<{ ok: boolean; reason?: string }>;
   setCountry: (c: string) => Promise<void>;
   setLanguage: (l: string) => Promise<void>;
+  setLanguages: (codes: string[]) => Promise<void>;
   addCoins: (n: number) => Promise<void>;
 }
 
@@ -47,6 +49,7 @@ export function StoreProvider({
   const [email, setEmail] = useState("");
   const [country, setCountryState] = useState("PK");
   const [language, setLanguageState] = useState("en");
+  const [languages, setLanguagesState] = useState<string[]>([]);
   const [coins, setCoins] = useState(0);
   const [favourites, setFavourites] = useState<string[]>([]);
   const [unlocked, setUnlocked] = useState<string[]>([]);
@@ -62,11 +65,12 @@ export function StoreProvider({
     setSignedIn(true);
     setEmail(user.email ?? "");
 
-    const [profileRes, favRes, unlockRes, catRes] = await Promise.all([
+    const [profileRes, favRes, unlockRes, catRes, langRes] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
       supabase.from("favourites").select("book_id").eq("user_id", user.id),
       supabase.from("book_unlocks").select("book_id").eq("user_id", user.id),
       supabase.from("user_categories").select("category_id").eq("user_id", user.id),
+      supabase.from("user_languages").select("language_code").eq("user_id", user.id),
     ]);
 
     const p = profileRes.data;
@@ -81,6 +85,9 @@ export function StoreProvider({
     setFavourites((favRes.data ?? []).map((r: any) => r.book_id));
     setUnlocked((unlockRes.data ?? []).map((r: any) => r.book_id));
     setSelectedCategories((catRes.data ?? []).map((r: any) => r.category_id));
+    // fall back to the single preferred_language if user_languages is empty
+    const langCodes = (langRes.data ?? []).map((r: any) => r.language_code);
+    setLanguagesState(langCodes.length ? langCodes : (p?.preferred_language ? [p.preferred_language] : []));
     setReady(true);
   }, [supabase]);
 
@@ -103,12 +110,18 @@ export function StoreProvider({
     setCoins(0);
   }, [supabase]);
 
-  const completeOnboarding = useCallback(async (categoryIds: string[]) => {
+  const completeOnboarding = useCallback(async (categoryIds: string[], languageCodes: string[]) => {
     const uid = await userId();
     if (!uid) return;
     await supabase.from("user_categories").upsert(categoryIds.map((category_id) => ({ user_id: uid, category_id })));
-    await supabase.from("profiles").update({ onboarding_completed: true }).eq("id", uid);
+    await supabase.from("user_languages").delete().eq("user_id", uid);
+    if (languageCodes.length) {
+      await supabase.from("user_languages").insert(languageCodes.map((language_code) => ({ user_id: uid, language_code })));
+    }
+    await supabase.from("profiles").update({ onboarding_completed: true, preferred_language: languageCodes[0] ?? "en" }).eq("id", uid);
     setSelectedCategories(categoryIds);
+    setLanguagesState(languageCodes);
+    setLanguageState(languageCodes[0] ?? "en");
     setOnboarded(true);
   }, [supabase, userId]);
 
@@ -154,6 +167,18 @@ export function StoreProvider({
     if (uid) await supabase.from("profiles").update({ preferred_language: l }).eq("id", uid);
   }, [supabase, userId]);
 
+  const setLanguages = useCallback(async (codes: string[]) => {
+    setLanguagesState(codes);
+    setLanguageState(codes[0] ?? "en");
+    const uid = await userId();
+    if (!uid) return;
+    await supabase.from("user_languages").delete().eq("user_id", uid);
+    if (codes.length) {
+      await supabase.from("user_languages").insert(codes.map((language_code) => ({ user_id: uid, language_code })));
+    }
+    await supabase.from("profiles").update({ preferred_language: codes[0] ?? "en" }).eq("id", uid);
+  }, [supabase, userId]);
+
   const addCoins = useCallback(async (n: number) => {
     const uid = await userId();
     if (!uid) return;
@@ -162,10 +187,10 @@ export function StoreProvider({
   }, [supabase, userId, coins]);
 
   const value: Store = {
-    ready, signedIn, onboarded, name, email, country, language, coins,
+    ready, signedIn, onboarded, name, email, country, language, languages, coins,
     favourites, unlocked, selectedCategories,
     refresh: load, signOut, completeOnboarding, toggleFavourite, isFavourite,
-    isBookUnlocked, unlockBook, setCountry, setLanguage, addCoins,
+    isBookUnlocked, unlockBook, setCountry, setLanguage, setLanguages, addCoins,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

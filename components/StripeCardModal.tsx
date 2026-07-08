@@ -21,14 +21,17 @@ const appearance = {
 
 export default function StripeCardModal({
   pkg,
+  promoCode,
   onClose,
   onSuccess,
 }: {
   pkg: CoinPackage;
+  promoCode?: string;
   onClose: () => void;
   onSuccess: (msg: string) => void;
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [payAmount, setPayAmount] = useState<number>(pkg.price);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,18 +40,23 @@ export default function StripeCardModal({
         const res = await fetch("/api/stripe/payment-intent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ packageId: pkg.id }),
+          body: JSON.stringify({ packageId: pkg.id, promoCode: promoCode || undefined }),
         });
         const data = await res.json();
-        if (data.clientSecret) setClientSecret(data.clientSecret);
-        else setError(data.error === "stripe_not_configured" ? "Card payments aren't set up yet." : (data.error ?? "Could not start payment."));
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+          if (typeof data.amount === "number") setPayAmount(data.amount);
+        } else {
+          setError(data.error === "stripe_not_configured" ? "Card payments aren't set up yet." : (data.error ?? "Could not start payment."));
+        }
       } catch {
         setError("Network error. Please try again.");
       }
     })();
-  }, [pkg.id]);
+  }, [pkg.id, promoCode]);
 
   const coins = pkg.coin_amount + pkg.bonus_coins;
+  const discounted = payAmount < pkg.price;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
@@ -59,7 +67,10 @@ export default function StripeCardModal({
               <CreditCard className="h-5 w-5 text-brand-600" /> Pay with card
             </h3>
             <p className="mt-1 flex items-center gap-1.5 text-sm text-gray-500">
-              <Coins className="h-4 w-4 text-gold-500" /> {coins} coins · {pkg.currency} {pkg.price.toLocaleString()}
+              <Coins className="h-4 w-4 text-gold-500" /> {coins} coins ·{" "}
+              {discounted && <span className="text-gray-400 line-through">{pkg.currency} {pkg.price.toLocaleString()}</span>}{" "}
+              <span className={discounted ? "font-semibold text-brand-700" : ""}>{pkg.currency} {payAmount.toLocaleString()}</span>
+              {discounted && <span className="rounded-full bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold text-brand-600">PROMO</span>}
             </p>
           </div>
           <button onClick={onClose} className="grid h-9 w-9 place-items-center rounded-full text-gray-400 hover:bg-gray-100">
@@ -75,7 +86,7 @@ export default function StripeCardModal({
           </div>
         ) : (
           <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
-            <CardForm amount={`${pkg.currency} ${pkg.price.toLocaleString()}`} onSuccess={onSuccess} />
+            <CardForm amount={`${pkg.currency} ${payAmount.toLocaleString()}`} onSuccess={onSuccess} />
           </Elements>
         )}
 

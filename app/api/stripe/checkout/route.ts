@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
 
-  const { packageId } = await req.json().catch(() => ({}));
+  const { packageId, promoCode } = await req.json().catch(() => ({}));
   const { data: pkg } = await supabase
     .from("coin_packages")
     .select("*")
@@ -25,6 +25,19 @@ export async function POST(req: Request) {
   const currency = String(pkg.currency ?? "USD").toLowerCase();
   const origin = req.headers.get("origin") ?? new URL(req.url).origin;
 
+  // Re-validate any discount code server-side — never trust the client price.
+  let amount = Number(pkg.price);
+  let promocodeId: string | null = null;
+  if (promoCode) {
+    const { data: v } = await supabase.rpc("validate_discount_promo", {
+      p_code: String(promoCode).trim(),
+      p_package_id: pkg.id,
+    });
+    if (!v?.success) return NextResponse.json({ error: "promo_invalid", reason: v?.error }, { status: 400 });
+    amount = Number(v.final_price);
+    promocodeId = v.promocode_id;
+  }
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -35,7 +48,7 @@ export async function POST(req: Request) {
           quantity: 1,
           price_data: {
             currency,
-            unit_amount: Math.round(Number(pkg.price) * 100), // smallest currency unit
+            unit_amount: Math.round(amount * 100), // smallest currency unit
             product_data: {
               name: `${coins} ZaraSuno Coins`,
               description: pkg.name ?? undefined,
@@ -48,7 +61,8 @@ export async function POST(req: Request) {
         user_id: user.id,
         package_id: pkg.id,
         coins: String(coins),
-        amount: String(pkg.price),
+        amount: String(amount),
+        promocode_id: promocodeId ?? "",
       },
       success_url: `${origin}/coins?success=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/coins?canceled=1`,

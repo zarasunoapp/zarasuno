@@ -32,6 +32,7 @@ export async function POST(req: Request) {
         p_amount: Number(m.amount ?? 0),
         p_package_id: m.package_id || null,
         p_reference: session.id, // idempotency key
+        p_promocode_id: m.promocode_id || null,
       });
       if (error) {
         console.error("credit_coin_purchase failed:", error.message);

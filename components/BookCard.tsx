@@ -9,13 +9,13 @@ import { cn } from "@/lib/utils";
 
 // Clean white card — cover, then title / author / short description, with the
 // coin price + lock shown to the right of the title (not on the image).
-export default function BookCard({ book }: { book: Book; index?: number }) {
+export default function BookCard({ book, fluid = false }: { book: Book; index?: number; fluid?: boolean }) {
   const { isFavourite, toggleFavourite, isBookUnlocked, signedIn } = useStore();
   const fav = isFavourite(book.id);
   const unlocked = isBookUnlocked(book.id, book.is_free);
 
   return (
-    <div className="w-64 shrink-0 sm:w-72">
+    <div className={cn(fluid ? "w-full sm:w-72 sm:shrink-0" : "w-64 shrink-0 sm:w-72")}>
       <div className="group overflow-hidden rounded-3xl bg-white p-3 shadow-card ring-1 ring-black/5 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-cardHover">
         <Link href={`/book/${book.id}`} className="block">
           <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100">
@@ -51,8 +51,8 @@ export default function BookCard({ book }: { book: Book; index?: number }) {
                 <h3 className="line-clamp-1 text-[15px] font-bold text-gray-900 transition-colors group-hover:text-brand-700">{book.title}</h3>
               </Link>
               <p className="truncate text-xs font-semibold text-gray-700">{book.author_name}</p>
-              {(book.subtitle || book.description) && (
-                <p className="mt-0.5 truncate text-[11px] text-gray-500">{book.subtitle || book.description}</p>
+              {book.subtitle && (
+                <p className="mt-0.5 truncate text-[11px] text-gray-500">{book.subtitle}</p>
               )}
             </div>
 

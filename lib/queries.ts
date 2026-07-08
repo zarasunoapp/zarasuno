@@ -39,8 +39,10 @@ function mapBook(row: any): Book {
   };
 }
 
+// books now has multiple author FKs (author_id, author_2_id…), so the authors
+// embed must be disambiguated to the primary author FK or PostgREST errors.
 const BOOK_SELECT =
-  "*, authors(name), subcategories(name, category_id, categories(name))";
+  "*, authors!books_author_id_fkey(name), subcategories(name, category_id, categories(name))";
 
 export async function getAllBooks(): Promise<Book[]> {
   const db = createClient();
@@ -64,6 +66,33 @@ export async function getSubcategories(): Promise<Subcategory[]> {
     id: s.id, category_id: s.category_id, name: s.name, slug: s.slug,
     sort_order: s.sort_order, is_active: s.is_active,
   }));
+}
+
+export interface FeaturedBook {
+  id: string;
+  book_id: string | null;
+  title: string | null;
+  image_url: string;
+  sort_order: number;
+}
+
+// Admin-managed Featured Books band — images only, ordered by sort_order.
+export async function getFeaturedBooks(): Promise<FeaturedBook[]> {
+  const db = createClient();
+  const { data } = await db
+    .from("featured_books")
+    .select("*")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  return (data ?? [])
+    .filter((r: any) => r.image_url)
+    .map((r: any) => ({
+      id: r.id,
+      book_id: r.book_id ?? null,
+      title: r.title ?? null,
+      image_url: r.image_url,
+      sort_order: r.sort_order ?? 0,
+    }));
 }
 
 export interface HomeSection {
