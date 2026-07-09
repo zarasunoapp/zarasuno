@@ -173,6 +173,12 @@ export default function LoginPage() {
                     inputMode="numeric"
                     className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-3.5 text-center text-2xl font-semibold tracking-[0.5em] outline-none focus:border-brand focus:bg-white"
                   />
+                  <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
+                    <span>Didn&apos;t get it? Check your spam folder.</span>
+                    <button type="button" onClick={sendOtp} disabled={loading} className="font-semibold text-brand-700 hover:underline disabled:opacity-50">
+                      Resend code
+                    </button>
+                  </div>
                 </div>
               )}
 
