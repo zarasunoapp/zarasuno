@@ -1,22 +1,19 @@
 import Link from "next/link";
-import { Headphones } from "lucide-react";
 
+// Brand logo (from public/images). On dark surfaces we sit the horizontal mark
+// on a soft light chip so the wordmark stays readable and matches the nav pills.
 export default function Logo({ light = false }: { light?: boolean }) {
   return (
-    <Link href="/" className="flex items-center gap-2 group">
+    <Link href="/" className="group inline-flex items-center" aria-label="ZaraSuno home">
       <span
-        className={`grid h-9 w-9 place-items-center rounded-xl shadow-soft transition-transform group-hover:scale-105 ${
-          light ? "bg-gold-400 text-brand-900" : "bg-brand text-white"
-        }`}
+        className={
+          light
+            ? "rounded-xl bg-white/95 px-2.5 py-1.5 shadow-soft ring-1 ring-black/5 transition-transform group-hover:scale-105"
+            : "transition-transform group-hover:scale-105"
+        }
       >
-        <Headphones className="h-5 w-5" strokeWidth={2.2} />
-      </span>
-      <span
-        className={`font-serif text-xl font-semibold tracking-tight ${
-          light ? "text-white" : "text-brand-700"
-        }`}
-      >
-        Zara<span className="text-gold-500">Suno</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/images/logo-light.png" alt="ZaraSuno" className="h-7 w-auto sm:h-8" />
       </span>
     </Link>
   );
