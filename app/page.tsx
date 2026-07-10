@@ -18,8 +18,6 @@ export default async function HomePage() {
     getFeaturedBooks(),
   ]);
 
-  const bookOfDay = allBooks.find((b) => b.is_book_of_day) ?? allBooks[0] ?? null;
-
   return (
     <HomeClient
       signedIn={signedIn}
@@ -27,7 +25,6 @@ export default async function HomePage() {
       allBooks={allBooks}
       categories={categories}
       subcategories={subcategories}
-      bookOfDay={bookOfDay}
       faqs={faqs}
       featuredBooks={featuredBooks}
     />

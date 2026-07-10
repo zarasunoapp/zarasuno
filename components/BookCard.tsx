@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Lock, Play, Coins } from "lucide-react";
+import { Heart, Lock, Play, Coins, Headphones, Lightbulb, Clock } from "lucide-react";
 import type { Book } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { cn, formatDuration } from "@/lib/utils";
 
 // Clean white card — cover, then title / author / short description, with the
 // coin price + lock shown to the right of the title (not on the image).
@@ -13,6 +13,7 @@ export default function BookCard({ book, fluid = false }: { book: Book; index?: 
   const { isFavourite, toggleFavourite, isBookUnlocked, signedIn } = useStore();
   const fav = isFavourite(book.id);
   const unlocked = isBookUnlocked(book.id, book.is_free);
+  const isSummary = book.book_type === "summary";
 
   return (
     <div className={cn(fluid ? "w-full sm:w-72 sm:shrink-0" : "w-64 shrink-0 sm:w-72")}>
@@ -67,6 +68,24 @@ export default function BookCard({ book, fluid = false }: { book: Book; index?: 
               )}
               {!unlocked && !book.is_free && <Lock className="h-3.5 w-3.5 text-gray-400" />}
             </div>
+          </div>
+
+          {/* type badge (Summary / Full Book) + duration */}
+          <div className="mt-2.5 flex flex-wrap items-center gap-2">
+            {isSummary ? (
+              <span className="flex items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-[11px] font-bold text-brand-700 ring-1 ring-brand-100">
+                <Lightbulb className="h-3.5 w-3.5" /> Summary
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 rounded-full bg-gold-100 px-2 py-1 text-[11px] font-bold text-gold-600 ring-1 ring-gold-200">
+                <Headphones className="h-3.5 w-3.5" /> Full Book
+              </span>
+            )}
+            {book.duration_seconds > 0 && (
+              <span className="flex items-center gap-1 text-[11px] font-medium text-gray-500">
+                <Clock className="h-3.5 w-3.5" /> {formatDuration(book.duration_seconds)}
+              </span>
+            )}
           </div>
         </div>
 

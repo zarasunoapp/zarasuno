@@ -43,7 +43,6 @@ export default function HomeClient({
   allBooks,
   categories,
   subcategories,
-  bookOfDay,
   faqs,
   featuredBooks = [],
 }: {
@@ -52,7 +51,6 @@ export default function HomeClient({
   allBooks: Book[];
   categories: Category[];
   subcategories: Subcategory[];
-  bookOfDay: Book | null;
   faqs?: Faq[];
   featuredBooks?: FeaturedBook[];
 }) {
@@ -83,7 +81,7 @@ export default function HomeClient({
   return (
     <>
       {signedIn ? (
-        <SignedInHero bookOfDay={bookOfDay} />
+        <SignedInHero />
       ) : (
         <>
           <LandingHero covers={allBooks} />

@@ -48,6 +48,7 @@ export interface Book {
   is_free: boolean;
   is_locked: boolean;
   duration_seconds: number;
+  book_type?: string; // 'summary' | 'audiobook' (full book)
   chapter_count: number;
   listen_count: number;
   is_book_of_month: boolean;
