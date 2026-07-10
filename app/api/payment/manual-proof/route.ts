@@ -16,6 +16,7 @@ export async function POST(req: Request) {
   const packageId = String(form.get("packageId") ?? "");
   const provider = String(form.get("provider") ?? "manual");
   const reference = String(form.get("reference") ?? "").trim();
+  const promoCode = String(form.get("promoCode") ?? "").trim();
   const file = form.get("screenshot") as File | null;
 
   if (!packageId) return NextResponse.json({ error: "package_required" }, { status: 400 });
@@ -25,6 +26,16 @@ export async function POST(req: Request) {
   const { data: pkg } = await supabase
     .from("coin_packages").select("*").eq("id", packageId).eq("is_active", true).maybeSingle();
   if (!pkg) return NextResponse.json({ error: "package_not_found" }, { status: 404 });
+
+  // re-validate any discount code server-side → record the discounted amount
+  let chargeAmount = Number(pkg.price);
+  if (promoCode) {
+    const { data: v } = await supabase.rpc("validate_discount_promo", {
+      p_code: promoCode,
+      p_package_id: pkg.id,
+    });
+    if (v?.success) chargeAmount = Number(v.final_price);
+  }
 
   const admin = createAdminClient();
   let proofUrl: string | null = null;
@@ -48,7 +59,7 @@ export async function POST(req: Request) {
     user_id: user.id,
     type: "purchase",
     coin_change: coins,               // intended coins — credited when admin approves
-    amount: pkg.price,
+    amount: chargeAmount,             // discounted price if a promo was applied
     currency: pkg.currency ?? "PKR",
     package_id: pkg.id,
     payment_provider: providerValue,

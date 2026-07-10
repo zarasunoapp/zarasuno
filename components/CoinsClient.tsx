@@ -318,12 +318,48 @@ function Inner({ packages, configs, country }: { packages: CoinPackage[]; config
 }
 
 function ManualPaymentModal({ config, pkg, amount, onClose, onDone }: { config: PaymentConfig; pkg: CoinPackage; amount?: number; onClose: () => void; onDone: (msg: string) => void }) {
-  const payable = amount ?? pkg.price;
   const [ref, setRef] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // promo applied here at checkout (discount)
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedCode, setAppliedCode] = useState("");
+  const [discAmount, setDiscAmount] = useState<number | null>(null);
+  const [discPct, setDiscPct] = useState<number | null>(null);
+  const [applyingPromo, setApplyingPromo] = useState(false);
+  const [promoErr, setPromoErr] = useState<string | null>(null);
+  const payable = discAmount ?? amount ?? pkg.price;
+
+  const applyPromo = async () => {
+    if (!promoInput.trim() || applyingPromo) return;
+    setApplyingPromo(true);
+    setPromoErr(null);
+    try {
+      const res = await fetch("/api/promo/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoInput.trim(), packageId: pkg.id }),
+      });
+      const data = await res.json();
+      if (!data?.success) {
+        setPromoErr(PROMO_ERRORS[data?.error] ?? "Couldn't apply this code.");
+      } else if (data.mode === "coins") {
+        onDone(`Promo applied · +${data.coins} coins added 🎉`);
+      } else if (data.mode === "discount") {
+        setDiscAmount(Number(data.final_price));
+        setDiscPct(Number(data.discount_percent));
+        setAppliedCode(promoInput.trim().toUpperCase());
+        setPromoInput("");
+      }
+    } catch {
+      setPromoErr("Network error. Please try again.");
+    } finally {
+      setApplyingPromo(false);
+    }
+  };
 
   const pickFile = (f: File | null) => {
     setError(null);
@@ -340,6 +376,7 @@ function ManualPaymentModal({ config, pkg, amount, onClose, onDone }: { config: 
       fd.append("packageId", pkg.id);
       fd.append("provider", config.provider);
       fd.append("reference", ref.trim());
+      if (appliedCode) fd.append("promoCode", appliedCode);
       if (file) fd.append("screenshot", file);
       const res = await fetch("/api/payment/manual-proof", { method: "POST", body: fd });
       const data = await res.json();
@@ -383,7 +420,46 @@ function ManualPaymentModal({ config, pkg, amount, onClose, onDone }: { config: 
           {config.account_details && (
             <p className="text-sm font-semibold text-gray-900">{config.account_details}</p>
           )}
-          <p className="mt-1 text-lg font-bold text-brand-700">Send {pkg.currency} {payable.toLocaleString()}</p>
+          {discAmount != null ? (
+            <p className="mt-1 text-lg font-bold text-brand-700">
+              Send <span className="text-gray-400 line-through">{pkg.currency} {(amount ?? pkg.price).toLocaleString()}</span> {pkg.currency} {payable.toLocaleString()}
+            </p>
+          ) : (
+            <p className="mt-1 text-lg font-bold text-brand-700">Send {pkg.currency} {payable.toLocaleString()}</p>
+          )}
+        </div>
+
+        {/* Have a promo code? */}
+        <div className="mt-3">
+          {appliedCode ? (
+            <div className="flex items-center justify-between gap-2 rounded-xl bg-brand-50 px-3.5 py-2.5 text-sm ring-1 ring-brand-100">
+              <span className="flex items-center gap-2 font-semibold text-brand-800">
+                <Check className="h-4 w-4 text-brand-600" />
+                <span className="rounded-md bg-white px-1.5 py-0.5 font-mono text-brand-700">{appliedCode}</span>
+                {discPct ?? ""}% off
+              </span>
+              <button onClick={() => { setAppliedCode(""); setDiscAmount(null); setDiscPct(null); }} className="text-xs font-semibold text-gray-500 hover:text-rose-500">Remove</button>
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Ticket className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gold-500" />
+                  <input
+                    value={promoInput}
+                    onChange={(e) => { setPromoInput(e.target.value); setPromoErr(null); }}
+                    onKeyDown={(e) => e.key === "Enter" && applyPromo()}
+                    placeholder="Have a promo code?"
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-2.5 pl-9 pr-3 text-sm uppercase outline-none focus:border-brand focus:bg-white"
+                  />
+                </div>
+                <button onClick={applyPromo} disabled={applyingPromo || !promoInput.trim()} className="rounded-xl bg-brand px-5 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50">
+                  {applyingPromo ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
+                </button>
+              </div>
+              {promoErr && <p className="mt-1.5 text-xs font-medium text-rose-600">{promoErr}</p>}
+            </>
+          )}
         </div>
 
         {/* Instructions */}
