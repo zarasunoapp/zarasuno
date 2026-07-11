@@ -2,10 +2,17 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Lock, Play, Coins, Headphones, Lightbulb, Clock } from "lucide-react";
+import { Heart, Lock, Play, Coins, Headphones, Lightbulb, BookOpen, Clock } from "lucide-react";
 import type { Book } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { cn, formatDuration } from "@/lib/utils";
+
+// content-type badge (audiobook / summary / ebook), in the brand palette
+const TYPE_BADGE = {
+  summary: { label: "Summary", icon: Lightbulb, cls: "bg-brand-50 text-brand-700 ring-brand-100" },
+  audiobook: { label: "Audiobook", icon: Headphones, cls: "bg-gold-100 text-gold-600 ring-gold-200" },
+  ebook: { label: "eBook", icon: BookOpen, cls: "bg-clay-100 text-brand-900 ring-clay-200" },
+} as const;
 
 // Clean white card — cover, then title / author / short description, with the
 // coin price + lock shown to the right of the title (not on the image).
@@ -13,7 +20,8 @@ export default function BookCard({ book, fluid = false }: { book: Book; index?: 
   const { isFavourite, toggleFavourite, isBookUnlocked, signedIn } = useStore();
   const fav = isFavourite(book.id);
   const unlocked = isBookUnlocked(book.id, book.is_free);
-  const isSummary = book.book_type === "summary";
+  const badge = TYPE_BADGE[book.book_type as keyof typeof TYPE_BADGE] ?? TYPE_BADGE.audiobook;
+  const BadgeIcon = badge.icon;
 
   return (
     <div className={cn(fluid ? "w-full sm:w-72 sm:shrink-0" : "w-64 shrink-0 sm:w-72")}>
@@ -70,17 +78,11 @@ export default function BookCard({ book, fluid = false }: { book: Book; index?: 
             </div>
           </div>
 
-          {/* type badge (Summary / Full Book) + duration */}
+          {/* content-type badge (Audiobook / Summary / eBook) + duration */}
           <div className="mt-2.5 flex flex-wrap items-center gap-2">
-            {isSummary ? (
-              <span className="flex items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-[11px] font-bold text-brand-700 ring-1 ring-brand-100">
-                <Lightbulb className="h-3.5 w-3.5" /> Summary
-              </span>
-            ) : (
-              <span className="flex items-center gap-1 rounded-full bg-gold-100 px-2 py-1 text-[11px] font-bold text-gold-600 ring-1 ring-gold-200">
-                <Headphones className="h-3.5 w-3.5" /> Full Book
-              </span>
-            )}
+            <span className={cn("flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold ring-1", badge.cls)}>
+              <BadgeIcon className="h-3.5 w-3.5" /> {badge.label}
+            </span>
             {book.duration_seconds > 0 && (
               <span className="flex items-center gap-1 text-[11px] font-medium text-gray-500">
                 <Clock className="h-3.5 w-3.5" /> {formatDuration(book.duration_seconds)}

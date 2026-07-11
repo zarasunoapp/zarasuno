@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
-  Play, Lock, Heart, Download, Clock, ListMusic, Coins, Check, ChevronLeft,
+  Play, Lock, Heart, Download, Clock, ListMusic, Coins, Check, ChevronLeft, BookOpen,
 } from "lucide-react";
 import type { Author, Book, Chapter } from "@/lib/types";
 import { useStore } from "@/lib/store";
@@ -60,6 +60,19 @@ export default function BookDetailClient({
   const handleDownload = () => {
     if (unlocked || hasPreview) setShowDownload(true);
     else router.push("/coins?need=" + book.coin_price);
+  };
+
+  // Open the eBook file via a short-lived signed URL (server checks unlock).
+  const openEbook = async () => {
+    if (!unlocked) return router.push("/coins?need=" + book.coin_price);
+    try {
+      const res = await fetch(`/api/ebook?book=${book.id}`);
+      const data = await res.json();
+      if (data.url) window.open(data.url, "_blank", "noopener");
+      else setToast(data.error === "locked" ? "Unlock this book to read the eBook." : "eBook isn't available yet.");
+    } catch {
+      setToast("Couldn't open the eBook. Please try again.");
+    }
   };
 
   // Navigate to the player. Allowed if unlocked, or if the target (or any)
@@ -119,7 +132,20 @@ export default function BookDetailClient({
 
               {/* actions */}
               <div className="mt-7 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-                {unlocked ? (
+                {book.book_type === "ebook" ? (
+                  /* eBook: read instead of listen */
+                  unlocked ? (
+                    <button onClick={openEbook} className="btn-green flex items-center gap-2 rounded-full px-7 py-3.5 text-base font-semibold">
+                      <BookOpen className="h-5 w-5" /> Read eBook
+                    </button>
+                  ) : (
+                    !book.is_free && (
+                      <button onClick={handleUnlock} disabled={busy} className="btn-gold flex items-center gap-2 rounded-full px-6 py-3.5 text-base font-semibold disabled:opacity-60">
+                        <Coins className="h-5 w-5" /> {busy ? "Unlocking…" : `Unlock · ${book.coin_price}`}
+                      </button>
+                    )
+                  )
+                ) : unlocked ? (
                   <button onClick={() => goListen()} className="btn-green flex items-center gap-2 rounded-full px-7 py-3.5 text-base font-semibold">
                     <Play className="h-5 w-5 fill-current" /> Listen now
                   </button>
@@ -140,6 +166,13 @@ export default function BookDetailClient({
                       </button>
                     )}
                   </>
+                )}
+
+                {/* audiobook/summary that ALSO has an eBook file → secondary read button */}
+                {book.book_type !== "ebook" && book.ebook_file && unlocked && (
+                  <button onClick={openEbook} className="flex items-center gap-2 rounded-full bg-white/10 px-6 py-3.5 text-base font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/15">
+                    <BookOpen className="h-5 w-5" /> Read eBook
+                  </button>
                 )}
                 {unlocked && (
                   <span className="flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-3 text-sm font-semibold text-gold-200 ring-1 ring-white/15">

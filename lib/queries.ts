@@ -26,6 +26,7 @@ function mapBook(row: any): Book {
     is_locked: row.is_locked,
     duration_seconds: row.duration_seconds ?? 0,
     book_type: row.book_type ?? "audiobook",
+    ebook_file: row.metadata?.ebook_file ?? null,
     chapter_count: row.chapter_count ?? 0,
     listen_count: row.listen_count ?? 0,
     is_book_of_month: row.is_book_of_month ?? false,

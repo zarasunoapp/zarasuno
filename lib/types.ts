@@ -48,7 +48,8 @@ export interface Book {
   is_free: boolean;
   is_locked: boolean;
   duration_seconds: number;
-  book_type?: string; // 'summary' | 'audiobook' (full book)
+  book_type?: string; // 'summary' | 'audiobook' | 'ebook'
+  ebook_file?: string | null; // storage path in private `ebooks` bucket (from metadata)
   chapter_count: number;
   listen_count: number;
   is_book_of_month: boolean;
