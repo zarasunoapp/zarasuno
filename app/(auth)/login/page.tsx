@@ -20,6 +20,12 @@ export default function LoginPage() {
   const [resendIn, setResendIn] = useState(0); // seconds until a code can be resent
   const [resetSent, setResetSent] = useState(false);
 
+  // prefill email if we arrived from signup (?email=...)
+  useEffect(() => {
+    const e = new URLSearchParams(window.location.search).get("email");
+    if (e) setEmail(e);
+  }, []);
+
   // tick the resend countdown down to 0
   useEffect(() => {
     if (resendIn <= 0) return;

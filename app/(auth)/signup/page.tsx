@@ -35,12 +35,10 @@ export default function SignupPage() {
         if (data.error === "weak_password") return setError("Password must be at least 6 characters.");
         return setError(data.error || "Couldn't create your account. Please try again.");
       }
-      // sign in immediately, then take them into the app
-      const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+      // account created — send them to sign in
       setLoading(false);
-      if (signInErr) return setError(signInErr.message);
       setRegistered(true);
-      setTimeout(() => { window.location.href = "/"; }, 1400);
+      setTimeout(() => { window.location.href = `/login?email=${encodeURIComponent(email)}`; }, 1500);
     } catch {
       setLoading(false);
       setError("Network error. Please try again.");
@@ -113,9 +111,10 @@ export default function SignupPage() {
           {registered ? (
             <div className="rounded-3xl bg-white p-8 text-center shadow-card ring-1 ring-black/5">
               <CheckCircle2 className="mx-auto h-14 w-14 text-brand-500" />
-              <h2 className="mt-4 font-serif text-2xl font-semibold text-gray-900">You&apos;re all set! 🎉</h2>
-              <p className="mt-2 text-gray-500">Your account has been created. Taking you in…</p>
+              <h2 className="mt-4 font-serif text-2xl font-semibold text-gray-900">Account created! 🎉</h2>
+              <p className="mt-2 text-gray-500">Please sign in to continue. Redirecting…</p>
               <Loader2 className="mx-auto mt-5 h-6 w-6 animate-spin text-brand-500" />
+              <Link href={`/login?email=${encodeURIComponent(email)}`} className="mt-5 inline-block rounded-full bg-brand px-7 py-3 font-semibold text-white hover:bg-brand-600">Go to sign in</Link>
             </div>
           ) : (
             <div className="rounded-3xl bg-white p-6 shadow-card ring-1 ring-black/5 sm:p-8">
