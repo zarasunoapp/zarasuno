@@ -27,6 +27,11 @@ export default function SignupPage() {
     });
     setLoading(false);
     if (error) return setError(error.message);
+    // Supabase returns a user with an empty identities array when the email is
+    // already registered (no email is sent) — surface that clearly.
+    if (data.user && (data.user.identities?.length ?? 0) === 0) {
+      return setError("This email is already registered. Please sign in instead.");
+    }
     if (data.session) {
       window.location.href = "/";
     } else {
