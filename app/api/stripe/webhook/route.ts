@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendCoinsEmail } from "@/lib/email";
 
 // Stripe calls this after a successful payment. We verify the signature, then
 // credit the coins to the user's balance (service-role, idempotent RPC).
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
     const m = session.metadata ?? {};
     if (m.user_id && m.coins) {
       const admin = createAdminClient();
-      const { error } = await admin.rpc("credit_coin_purchase", {
+      const { data: credit, error } = await admin.rpc("credit_coin_purchase", {
         p_user_id: m.user_id,
         p_coins: Number(m.coins),
         p_amount: Number(m.amount ?? 0),
@@ -37,6 +38,20 @@ export async function POST(req: Request) {
       if (error) {
         console.error("credit_coin_purchase failed:", error.message);
         return NextResponse.json({ error: "credit_failed" }, { status: 500 });
+      }
+
+      // email the buyer once (webhook may arrive before/after the return handler;
+      // only the first real credit returns credited=true)
+      if (credit?.credited) {
+        try {
+          await sendCoinsEmail({
+            to: credit.email || session.customer_details?.email || "",
+            name: credit.name,
+            coins: Number(m.coins),
+            balance: credit.balance,
+            packageName: credit.package_name,
+          });
+        } catch (e) { console.error("coins email failed:", e); }
       }
     }
   }

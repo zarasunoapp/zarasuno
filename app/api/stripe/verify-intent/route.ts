@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendCoinsEmail } from "@/lib/email";
 
 // After the embedded card form confirms a PaymentIntent, the browser calls this
 // to credit the coins. Idempotent (RPC keyed on the PaymentIntent id).
@@ -28,7 +29,7 @@ export async function GET(req: Request) {
   if (m.user_id !== user.id) return NextResponse.json({ error: "user_mismatch" }, { status: 403 });
 
   const admin = createAdminClient();
-  const { error } = await admin.rpc("credit_coin_purchase", {
+  const { data: credit, error } = await admin.rpc("credit_coin_purchase", {
     p_user_id: m.user_id,
     p_coins: Number(m.coins),
     p_amount: Number(m.amount ?? 0),
@@ -37,6 +38,19 @@ export async function GET(req: Request) {
     p_promocode_id: m.promocode_id || null,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // email the buyer once (only on the first, real credit)
+  if (credit?.credited) {
+    try {
+      await sendCoinsEmail({
+        to: credit.email || user.email || "",
+        name: credit.name,
+        coins: Number(m.coins),
+        balance: credit.balance,
+        packageName: credit.package_name,
+      });
+    } catch (e) { console.error("coins email failed:", e); }
+  }
 
   return NextResponse.json({ ok: true, coins: Number(m.coins) });
 }
