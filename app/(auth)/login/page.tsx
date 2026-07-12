@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Mail, KeyRound, ArrowRight, Loader2, Eye, EyeOff, Star, Quote } from "lucide-react";
@@ -17,10 +17,28 @@ export default function LoginPage() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resendIn, setResendIn] = useState(0); // seconds until a code can be resent
+
+  // tick the resend countdown down to 0
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setTimeout(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
 
   const done = () => {
     // Full navigation so the server re-renders with the fresh session cookies.
     window.location.href = "/";
+  };
+
+  // Turn Supabase auth errors into clear, user-friendly messages.
+  const friendly = (err: unknown) => {
+    const e = err as { message?: string; status?: number } | null;
+    const m = e?.message ?? "";
+    if (/after \d+ seconds|rate limit|too many/i.test(m)) return "Please wait a minute before requesting another code.";
+    if (/sending|confirmation email|smtp/i.test(m) || e?.status === 500) return "Couldn't send the code right now (email service issue). Please try again shortly.";
+    if (/invalid login|invalid credentials/i.test(m)) return "Wrong email or password.";
+    return m || "Something went wrong. Please try again.";
   };
 
   const loginPassword = async () => {
@@ -28,17 +46,18 @@ export default function LoginPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) setError(error.message);
+    if (error) setError(friendly(error));
     else done();
   };
 
   const sendOtp = async () => {
+    if (loading || resendIn > 0) return;
     setError(null);
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
     setLoading(false);
-    if (error) setError(error.message);
-    else setStep("code");
+    if (error) setError(friendly(error));
+    else { setStep("code"); setResendIn(60); }
   };
 
   const verifyOtp = async () => {
@@ -46,7 +65,7 @@ export default function LoginPage() {
     setLoading(true);
     const { error } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
     setLoading(false);
-    if (error) setError(error.message);
+    if (error) setError(friendly(error));
     else done();
   };
 
@@ -136,6 +155,7 @@ export default function LoginPage() {
                 <input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { mode === "password" ? loginPassword() : step === "email" && sendOtp(); } }}
                   placeholder="you@example.com"
                   className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-3.5 pl-12 pr-4 text-sm outline-none transition focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand-100"
                 />
@@ -169,14 +189,16 @@ export default function LoginPage() {
                   <input
                     value={code}
                     onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    onKeyDown={(e) => { if (e.key === "Enter" && code.length === 6) verifyOtp(); }}
                     placeholder="000000"
                     inputMode="numeric"
+                    autoFocus
                     className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-3.5 text-center text-2xl font-semibold tracking-[0.5em] outline-none focus:border-brand focus:bg-white"
                   />
                   <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
                     <span>Didn&apos;t get it? Check your spam folder.</span>
-                    <button type="button" onClick={sendOtp} disabled={loading} className="font-semibold text-brand-700 hover:underline disabled:opacity-50">
-                      Resend code
+                    <button type="button" onClick={sendOtp} disabled={loading || resendIn > 0} className="font-semibold text-brand-700 hover:underline disabled:text-gray-400 disabled:no-underline">
+                      {resendIn > 0 ? `Resend in ${resendIn}s` : "Resend code"}
                     </button>
                   </div>
                 </div>
@@ -185,16 +207,16 @@ export default function LoginPage() {
               {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">{error}</p>}
 
               {mode === "password" ? (
-                <button onClick={loginPassword} disabled={loading} className="btn-green flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold disabled:opacity-60">
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Sign in <ArrowRight className="h-4 w-4" /></>}
+                <button onClick={loginPassword} disabled={loading} className="btn-green flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold disabled:opacity-70">
+                  {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</> : <>Sign in <ArrowRight className="h-4 w-4" /></>}
                 </button>
               ) : step === "email" ? (
-                <button onClick={sendOtp} disabled={loading || !email} className="btn-green flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold disabled:opacity-60">
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Send code <ArrowRight className="h-4 w-4" /></>}
+                <button onClick={sendOtp} disabled={loading || !email} className="btn-green flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold disabled:opacity-70">
+                  {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : <>Send code <ArrowRight className="h-4 w-4" /></>}
                 </button>
               ) : (
-                <button onClick={verifyOtp} disabled={loading || code.length < 6} className="btn-green flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold disabled:opacity-60">
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Verify &amp; sign in <ArrowRight className="h-4 w-4" /></>}
+                <button onClick={verifyOtp} disabled={loading || code.length < 6} className="btn-green flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold disabled:opacity-70">
+                  {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Verifying…</> : <>Verify &amp; sign in <ArrowRight className="h-4 w-4" /></>}
                 </button>
               )}
 
