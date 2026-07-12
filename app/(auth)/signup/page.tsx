@@ -16,26 +16,34 @@ export default function SignupPage() {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [registered, setRegistered] = useState(false);
 
   const signup = async () => {
     setError(null);
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email, password,
-      options: { data: { full_name: fullName, phone: phone.trim() || null }, emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined },
-    });
-    setLoading(false);
-    if (error) return setError(error.message);
-    // Supabase returns a user with an empty identities array when the email is
-    // already registered (no email is sent) — surface that clearly.
-    if (data.user && (data.user.identities?.length ?? 0) === 0) {
-      return setError("This email is already registered. Please sign in instead.");
-    }
-    if (data.session) {
-      window.location.href = "/";
-    } else {
-      setSent(true);
+    try {
+      // create the account already-confirmed (no email step)
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, fullName, phone }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setLoading(false);
+        if (data.error === "already_registered") return setError("This email is already registered. Please sign in instead.");
+        if (data.error === "weak_password") return setError("Password must be at least 6 characters.");
+        return setError(data.error || "Couldn't create your account. Please try again.");
+      }
+      // sign in immediately, then take them into the app
+      const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+      setLoading(false);
+      if (signInErr) return setError(signInErr.message);
+      setRegistered(true);
+      setTimeout(() => { window.location.href = "/"; }, 1400);
+    } catch {
+      setLoading(false);
+      setError("Network error. Please try again.");
     }
   };
 
@@ -102,12 +110,12 @@ export default function SignupPage() {
             <p className="mt-2 text-gray-500">Get 50 free coins to start listening.</p>
           </div>
 
-          {sent ? (
+          {registered ? (
             <div className="rounded-3xl bg-white p-8 text-center shadow-card ring-1 ring-black/5">
               <CheckCircle2 className="mx-auto h-14 w-14 text-brand-500" />
-              <h2 className="mt-4 font-serif text-2xl font-semibold text-gray-900">Check your inbox</h2>
-              <p className="mt-2 text-gray-500">We sent a confirmation link to <span className="font-semibold">{email}</span>. Confirm it, then sign in.</p>
-              <Link href="/login" className="mt-6 inline-block rounded-full bg-brand px-7 py-3 font-semibold text-white hover:bg-brand-600">Go to sign in</Link>
+              <h2 className="mt-4 font-serif text-2xl font-semibold text-gray-900">You&apos;re all set! 🎉</h2>
+              <p className="mt-2 text-gray-500">Your account has been created. Taking you in…</p>
+              <Loader2 className="mx-auto mt-5 h-6 w-6 animate-spin text-brand-500" />
             </div>
           ) : (
             <div className="rounded-3xl bg-white p-6 shadow-card ring-1 ring-black/5 sm:p-8">

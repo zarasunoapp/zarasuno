@@ -33,7 +33,7 @@ export default function Navbar() {
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  if (pathname?.endsWith("/listen") || pathname === "/login" || pathname === "/signup") return null;
+  if (pathname?.endsWith("/listen") || pathname === "/login" || pathname === "/signup" || pathname === "/reset-password") return null;
 
   const navItems = [...NAV, { href: "/profile", label: "Profile", icon: User }];
 

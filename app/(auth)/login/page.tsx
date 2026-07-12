@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resendIn, setResendIn] = useState(0); // seconds until a code can be resent
+  const [resetSent, setResetSent] = useState(false);
 
   // tick the resend countdown down to 0
   useEffect(() => {
@@ -67,6 +68,20 @@ export default function LoginPage() {
     setLoading(false);
     if (error) setError(friendly(error));
     else done();
+  };
+
+  const sendReset = async () => {
+    if (loading) return;
+    if (!email) return setError("Enter your email above first, then tap Forgot password.");
+    setError(null);
+    setResetSent(false);
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    });
+    setLoading(false);
+    if (error) setError(friendly(error));
+    else setResetSent(true);
   };
 
   const google = async () => {
@@ -181,6 +196,20 @@ export default function LoginPage() {
                     {showPw ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
+              )}
+
+              {mode === "password" && (
+                <div className="-mt-2 flex justify-end">
+                  <button type="button" onClick={sendReset} disabled={loading} className="text-xs font-semibold text-brand-700 hover:underline disabled:opacity-50">
+                    Forgot password?
+                  </button>
+                </div>
+              )}
+
+              {resetSent && (
+                <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700">
+                  Password reset link sent to <span className="font-semibold">{email}</span>. Check your inbox (and spam).
+                </p>
               )}
 
               {mode === "otp" && step === "code" && (

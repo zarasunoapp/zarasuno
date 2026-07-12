@@ -13,7 +13,7 @@ const CONTACT_LINKS = [
 
 export default function Footer() {
   const pathname = usePathname();
-  if (pathname?.endsWith("/listen") || pathname === "/login" || pathname === "/signup") return null;
+  if (pathname?.endsWith("/listen") || pathname === "/login" || pathname === "/signup" || pathname === "/reset-password") return null;
 
   return (
     <footer className="pb-24 md:pb-0">
