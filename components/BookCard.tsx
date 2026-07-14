@@ -17,9 +17,12 @@ const TYPE_BADGE = {
 // Clean white card — cover, then title / author / short description, with the
 // coin price + lock shown to the right of the title (not on the image).
 export default function BookCard({ book, fluid = false }: { book: Book; index?: number; fluid?: boolean }) {
-  const { isFavourite, toggleFavourite, isBookUnlocked, signedIn } = useStore();
+  const { isFavourite, toggleFavourite, isBookUnlocked, signedIn, ready } = useStore();
   const fav = isFavourite(book.id);
   const unlocked = isBookUnlocked(book.id, book.is_free);
+  // don't decide the lock state until unlocks have loaded (avoids a wrong
+  // "Unlock now" flash on books the user already owns)
+  const showLocked = ready && signedIn && !unlocked && !book.is_free;
   const badge = TYPE_BADGE[book.book_type as keyof typeof TYPE_BADGE] ?? TYPE_BADGE.audiobook;
   const BadgeIcon = badge.icon;
 
@@ -74,7 +77,7 @@ export default function BookCard({ book, fluid = false }: { book: Book; index?: 
                   <Coins className="h-3.5 w-3.5 text-gold-500" /> {book.coin_price}
                 </span>
               )}
-              {!unlocked && !book.is_free && <Lock className="h-3.5 w-3.5 text-gray-400" />}
+              {showLocked && <Lock className="h-3.5 w-3.5 text-gray-400" />}
             </div>
           </div>
 
@@ -95,10 +98,10 @@ export default function BookCard({ book, fluid = false }: { book: Book; index?: 
           href={`/book/${book.id}`}
           className={cn(
             "mt-2 flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition",
-            unlocked ? "bg-brand-900 text-white hover:bg-black" : "bg-gold-grad text-brand-900 shadow-gold"
+            showLocked ? "bg-gold-grad text-brand-900 shadow-gold" : "bg-brand-900 text-white hover:bg-black"
           )}
         >
-          {unlocked ? <><Play className="h-4 w-4 fill-current" /> Listen now</> : "Unlock now"}
+          {showLocked ? "Unlock now" : <><Play className="h-4 w-4 fill-current" /> Listen now</>}
         </Link>
       </div>
     </div>

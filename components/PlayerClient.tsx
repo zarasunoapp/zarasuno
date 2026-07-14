@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import type { Author, Book, Chapter } from "@/lib/types";
 import { useStore } from "@/lib/store";
+import { createClient } from "@/lib/supabase/client";
 import { cn, formatClock } from "@/lib/utils";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -29,6 +30,8 @@ export default function PlayerClient({
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playingRef = useRef(false);
+  const supabase = useRef(createClient()).current;
+  const lastSaveRef = useRef(0);
 
   const [index, setIndex] = useState(initialIndex);
   const [playing, setPlaying] = useState(false);
@@ -120,6 +123,38 @@ export default function PlayerClient({
   };
   const nudge = (s: number) => seek(Math.max(0, Math.min(duration || 0, position + s)));
 
+  // Persist listening progress (powers Library → History / In Progress).
+  const saveProgress = async (pos: number, opts?: { completed?: boolean }) => {
+    if (!unlocked) return; // only track real (unlocked/paid) listens
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const prior = chapters.slice(0, index).reduce((s, c) => s + (c.duration_seconds || 0), 0);
+    const cumulative = Math.floor(prior + (pos || 0));
+    const isLast = index === chapters.length - 1;
+    const nearEnd = duration > 0 && pos >= duration - 5;
+    const completed = opts?.completed ?? (isLast && nearEnd);
+    await supabase.from("listening_progress").upsert(
+      {
+        user_id: user.id,
+        book_id: book.id,
+        chapter_id: chapter?.id ?? null,
+        position_seconds: cumulative,
+        is_completed: completed,
+        last_listened_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,book_id" }
+    );
+  };
+
+  // save on unmount (leaving the player)
+  useEffect(() => {
+    return () => {
+      const a = audioRef.current;
+      if (a && a.currentTime > 0) saveProgress(a.currentTime);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="grain fixed inset-0 z-50 flex flex-col overflow-y-auto bg-brand-900 text-white">
       {/* hero-matching background */}
@@ -132,13 +167,21 @@ export default function PlayerClient({
       <audio
         ref={audioRef}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || chapter?.duration_seconds || 0)}
-        onTimeUpdate={(e) => setPosition(e.currentTarget.currentTime)}
+        onTimeUpdate={(e) => {
+          const t = e.currentTarget.currentTime;
+          setPosition(t);
+          // throttle progress writes to ~every 12s of playback
+          if (Date.now() - lastSaveRef.current > 12000) {
+            lastSaveRef.current = Date.now();
+            saveProgress(t);
+          }
+        }}
         onPlay={() => { playingRef.current = true; setPlaying(true); }}
-        onPause={() => { playingRef.current = false; setPlaying(false); }}
+        onPause={() => { playingRef.current = false; setPlaying(false); saveProgress(audioRef.current?.currentTime ?? position); }}
         onWaiting={() => setBuffering(true)}
         onPlaying={() => setBuffering(false)}
         onCanPlay={() => setBuffering(false)}
-        onEnded={() => goNext()}
+        onEnded={() => { saveProgress(duration, { completed: index === chapters.length - 1 }); goNext(); }}
         onError={() => { setAudioError("Audio isn't available for this chapter yet."); setLoading(false); setBuffering(false); }}
         preload="metadata"
       />
