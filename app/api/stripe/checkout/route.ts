@@ -3,6 +3,7 @@ import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import { priceForPackage } from "@/lib/queries";
 import { stripeUnitAmount, roundPrice } from "@/lib/pricing";
+import { countryFromHeaders } from "@/lib/geo";
 
 // Creates a Stripe Checkout Session for a coin package and returns its URL.
 export async function POST(req: Request) {
@@ -26,9 +27,14 @@ export async function POST(req: Request) {
   const coins = (pkg.coin_amount ?? 0) + (pkg.bonus_coins ?? 0);
   const origin = req.headers.get("origin") ?? new URL(req.url).origin;
 
-  // Price = user's country price (manual override or auto FX), else default.
-  const { data: prof } = await supabase.from("profiles").select("country").eq("id", user.id).maybeSingle();
-  const localized = await priceForPackage(supabase, pkg, prof?.country);
+  // Price follows the visitor's live IP country (matches the coins page).
+  // Fall back to the saved profile country only when IP is unavailable.
+  let country = countryFromHeaders(req.headers);
+  if (!country) {
+    const { data: prof } = await supabase.from("profiles").select("country").eq("id", user.id).maybeSingle();
+    country = prof?.country ?? null;
+  }
+  const localized = await priceForPackage(supabase, pkg, country);
   let amount = localized.price;
   const displayCurrency = localized.currency;
   const currency = displayCurrency.toLowerCase();

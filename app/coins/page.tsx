@@ -10,13 +10,13 @@ export default async function CoinsPage() {
   const user = await getSessionUser();
   const ipCountry = countryFromHeaders(headers()); // visitor's country by IP (Vercel)
 
-  // signed-in: their saved profile country (auto-set from IP at signup, editable)
-  // signed-out: live IP country. Fallback to PK.
+  // Prices always follow the visitor's live IP country. Only when the IP header
+  // isn't available (e.g. local dev) do we fall back to the saved profile country.
   let country = ipCountry ?? "PK";
-  if (user) {
+  if (!ipCountry && user) {
     const db = createClient();
     const { data } = await db.from("profiles").select("country").eq("id", user.id).maybeSingle();
-    country = data?.country || ipCountry || "PK";
+    country = data?.country ?? "PK";
   }
 
   const [packages, configs] = await Promise.all([
