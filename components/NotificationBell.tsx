@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Bell, X, Sparkles } from "lucide-react";
+import { Bell, X, Sparkles, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ type Notif = {
   image_url: string | null;
   audience: string | null;
   show_in_popup: boolean | null;
+  link: string | null;
   created_at: string;
 };
 
@@ -42,6 +44,7 @@ function audienceOk(n: Notif) {
 }
 
 export default function NotificationBell({ light = false }: { light?: boolean }) {
+  const router = useRouter();
   const supabase = useRef(createClient()).current;
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [open, setOpen] = useState(false);
@@ -97,6 +100,16 @@ export default function NotificationBell({ light = false }: { light?: boolean })
     saveSeen(next);
   };
 
+  // navigate to a notification's target (internal path → in-app, URL → new tab)
+  const go = (n: Notif) => {
+    if (!n.link) return;
+    setOpen(false);
+    setToast(null);
+    setPopup(null);
+    if (/^https?:\/\//i.test(n.link)) window.open(n.link, "_blank", "noopener");
+    else router.push(n.link);
+  };
+
   return (
     <>
       <button
@@ -133,7 +146,14 @@ export default function NotificationBell({ light = false }: { light?: boolean })
                 <p className="px-4 py-10 text-center text-sm text-gray-400">No notifications yet.</p>
               ) : (
                 notifs.map((n) => (
-                  <div key={n.id} className="flex gap-3 border-b border-gray-50 px-4 py-3 last:border-0 hover:bg-gray-50/60">
+                  <div
+                    key={n.id}
+                    onClick={() => go(n)}
+                    className={cn(
+                      "flex items-center gap-3 border-b border-gray-50 px-4 py-3 last:border-0",
+                      n.link ? "cursor-pointer hover:bg-brand-50/50" : "hover:bg-gray-50/60"
+                    )}
+                  >
                     {n.image_url ? (
                       <Image src={n.image_url} alt="" width={40} height={40} className="h-10 w-10 shrink-0 rounded-lg object-cover" />
                     ) : (
@@ -144,6 +164,7 @@ export default function NotificationBell({ light = false }: { light?: boolean })
                       {n.body && <p className="mt-0.5 text-sm text-gray-500">{n.body}</p>}
                       <p className="mt-1 text-xs text-gray-400">{timeAgo(n.created_at)}</p>
                     </div>
+                    {n.link && <ChevronRight className="h-4 w-4 shrink-0 text-gray-300" />}
                   </div>
                 ))
               )}
@@ -155,7 +176,7 @@ export default function NotificationBell({ light = false }: { light?: boolean })
       {/* live toast */}
       {toast && (
         <button
-          onClick={() => { setToast(null); openPanel(); }}
+          onClick={() => (toast.link ? go(toast) : (setToast(null), openPanel()))}
           className="fixed bottom-24 left-1/2 z-[60] flex max-w-[92vw] -translate-x-1/2 items-center gap-3 rounded-2xl bg-brand-900 px-4 py-3 text-left text-white shadow-2xl ring-1 ring-white/10 md:bottom-8"
         >
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10"><Bell className="h-4 w-4" /></span>
@@ -163,6 +184,7 @@ export default function NotificationBell({ light = false }: { light?: boolean })
             <span className="block truncate text-sm font-semibold">{toast.title}</span>
             {toast.body && <span className="block truncate text-xs text-brand-100">{toast.body}</span>}
           </span>
+          {toast.link && <ChevronRight className="h-4 w-4 shrink-0 text-brand-200" />}
         </button>
       )}
 
@@ -179,7 +201,14 @@ export default function NotificationBell({ light = false }: { light?: boolean })
               <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-600"><Sparkles className="h-6 w-6" /></span>
               <h3 className="mt-3 font-serif text-xl font-semibold text-gray-900">{popup.title}</h3>
               {popup.body && <p className="mt-2 text-sm text-gray-500">{popup.body}</p>}
-              <button onClick={() => setPopup(null)} className="btn-green mt-5 w-full rounded-full py-3 font-semibold">Got it</button>
+              {popup.link ? (
+                <div className="mt-5 flex gap-2">
+                  <button onClick={() => setPopup(null)} className="flex-1 rounded-full border border-gray-200 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50">Dismiss</button>
+                  <button onClick={() => go(popup)} className="btn-green flex-1 rounded-full py-3 text-sm font-semibold">View</button>
+                </div>
+              ) : (
+                <button onClick={() => setPopup(null)} className="btn-green mt-5 w-full rounded-full py-3 font-semibold">Got it</button>
+              )}
             </div>
           </div>
         </div>
