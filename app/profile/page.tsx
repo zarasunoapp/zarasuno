@@ -73,7 +73,7 @@ export default function ProfilePage() {
       if (picked.length) await supabase.from("user_categories").insert(picked.map((category_id) => ({ user_id: user.id, category_id })));
     }
     await setLanguages(pickedLangs); // persists languages + preferred_language
-    await refresh();                 // reload store so selectedCategories/languages match
+    await refresh();                 // reload store so state matches
     setSaving(false);
     setSaved(true);
   };

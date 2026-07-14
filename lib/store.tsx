@@ -118,7 +118,10 @@ export function StoreProvider({
     if (languageCodes.length) {
       await supabase.from("user_languages").insert(languageCodes.map((language_code) => ({ user_id: uid, language_code })));
     }
-    await supabase.from("profiles").update({ onboarding_completed: true, preferred_language: languageCodes[0] ?? "en" }).eq("id", uid);
+    await supabase.from("profiles").update({
+      onboarding_completed: true,
+      preferred_language: languageCodes[0] ?? "en",
+    }).eq("id", uid);
     setSelectedCategories(categoryIds);
     setLanguagesState(languageCodes);
     setLanguageState(languageCodes[0] ?? "en");

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
+import { priceForPackage } from "@/lib/queries";
+import { stripeUnitAmount, roundPrice } from "@/lib/pricing";
 
 // Creates a Stripe Checkout Session for a coin package and returns its URL.
 export async function POST(req: Request) {
@@ -22,11 +24,16 @@ export async function POST(req: Request) {
   if (!pkg) return NextResponse.json({ error: "package_not_found" }, { status: 404 });
 
   const coins = (pkg.coin_amount ?? 0) + (pkg.bonus_coins ?? 0);
-  const currency = String(pkg.currency ?? "USD").toLowerCase();
   const origin = req.headers.get("origin") ?? new URL(req.url).origin;
 
-  // Re-validate any discount code server-side — never trust the client price.
-  let amount = Number(pkg.price);
+  // Price = user's country price (manual override or auto FX), else default.
+  const { data: prof } = await supabase.from("profiles").select("country").eq("id", user.id).maybeSingle();
+  const localized = await priceForPackage(supabase, pkg, prof?.country);
+  let amount = localized.price;
+  const displayCurrency = localized.currency;
+  const currency = displayCurrency.toLowerCase();
+
+  // Re-validate any discount code server-side — apply the % to the base price.
   let promocodeId: string | null = null;
   if (promoCode) {
     const { data: v } = await supabase.rpc("validate_discount_promo", {
@@ -34,7 +41,7 @@ export async function POST(req: Request) {
       p_package_id: pkg.id,
     });
     if (!v?.success) return NextResponse.json({ error: "promo_invalid", reason: v?.error }, { status: 400 });
-    amount = Number(v.final_price);
+    amount = roundPrice(amount * (1 - Number(v.discount_percent) / 100), displayCurrency);
     promocodeId = v.promocode_id;
   }
 
@@ -48,7 +55,7 @@ export async function POST(req: Request) {
           quantity: 1,
           price_data: {
             currency,
-            unit_amount: Math.round(amount * 100), // smallest currency unit
+            unit_amount: stripeUnitAmount(amount, displayCurrency), // smallest currency unit
             product_data: {
               name: `${coins} ZaraSuno Coins`,
               description: pkg.name ?? undefined,

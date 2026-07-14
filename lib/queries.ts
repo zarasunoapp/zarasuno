@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { convertedPrice } from "@/lib/pricing";
 import type {
   Author, Book, Category, Subcategory, Chapter, CoinPackage, PaymentConfig,
 } from "@/lib/types";
@@ -192,14 +193,70 @@ export async function getChaptersForBook(bookId: string): Promise<Chapter[]> {
   }));
 }
 
-export async function getCoinPackages(): Promise<CoinPackage[]> {
+export async function getCoinPackages(country?: string): Promise<CoinPackage[]> {
   const db = createClient();
   const { data } = await db.from("coin_packages").select("*").eq("is_active", true).order("sort_order");
-  return (data ?? []).map((p: any, i: number) => ({
-    id: p.id, name: p.name, coin_amount: p.coin_amount, bonus_coins: p.bonus_coins ?? 0,
-    price: Number(p.price), currency: p.currency, is_active: p.is_active, sort_order: p.sort_order,
-    popular: i === 1,
+
+  // per-country price overrides (falls back to the package's default price)
+  const overrides: Record<string, { price: number; currency: string }> = {};
+  if (country) {
+    const { data: prices } = await db
+      .from("coin_package_prices")
+      .select("package_id, price, currency")
+      .eq("country_code", country)
+      .eq("is_active", true);
+    for (const r of prices ?? []) overrides[r.package_id] = { price: Number(r.price), currency: r.currency };
+  }
+
+  return Promise.all((data ?? []).map(async (p: any, i: number) => {
+    let price = Number(p.price);
+    let currency = p.currency;
+    if (overrides[p.id]) {
+      price = overrides[p.id].price;
+      currency = overrides[p.id].currency;
+    } else if (country) {
+      // no manual override → auto-convert at today's FX rate
+      const c = await convertedPrice(Number(p.price), p.currency, country);
+      price = c.price;
+      currency = c.currency;
+    }
+    return {
+      id: p.id, name: p.name, coin_amount: p.coin_amount, bonus_coins: p.bonus_coins ?? 0,
+      price, currency, is_active: p.is_active, sort_order: p.sort_order, popular: i === 1,
+    };
   }));
+}
+
+// Manual per-country override for a package (coin_package_prices), if any.
+export async function countryPrice(
+  db: ReturnType<typeof createClient>,
+  packageId: string,
+  country: string | null | undefined
+): Promise<{ price: number; currency: string } | null> {
+  if (!country) return null;
+  const { data } = await db
+    .from("coin_package_prices")
+    .select("price, currency")
+    .eq("package_id", packageId)
+    .eq("country_code", country)
+    .eq("is_active", true)
+    .maybeSingle();
+  return data ? { price: Number(data.price), currency: data.currency } : null;
+}
+
+// Server-side authoritative price for a package in a country: manual override
+// first, else auto FX conversion, else the package's base price.
+export async function priceForPackage(
+  db: ReturnType<typeof createClient>,
+  pkg: { id: string; price: number | string; currency: string },
+  country: string | null | undefined
+): Promise<{ price: number; currency: string }> {
+  if (country) {
+    const manual = await countryPrice(db, pkg.id, country);
+    if (manual) return manual;
+    return await convertedPrice(Number(pkg.price), pkg.currency, country);
+  }
+  return { price: Number(pkg.price), currency: pkg.currency };
 }
 
 export async function getPaymentConfigs(country: string): Promise<PaymentConfig[]> {

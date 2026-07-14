@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { countryFromHeaders } from "@/lib/geo";
 
 // Registers a user WITHOUT email confirmation — the account is created already
 // confirmed (email_confirm: true), so the client can sign in immediately.
@@ -10,7 +11,7 @@ export async function POST(req: Request) {
   if (String(password).length < 6) return NextResponse.json({ error: "weak_password" }, { status: 400 });
 
   const admin = createAdminClient();
-  const { error } = await admin.auth.admin.createUser({
+  const { data, error } = await admin.auth.admin.createUser({
     email: String(email).trim(),
     password: String(password),
     email_confirm: true,
@@ -23,5 +24,12 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
+
+  // set the new user's country from their IP (prices localise to their region)
+  const ipCountry = countryFromHeaders(req.headers);
+  if (ipCountry && data.user) {
+    await admin.from("profiles").update({ country: ipCountry }).eq("id", data.user.id);
+  }
+
   return NextResponse.json({ ok: true });
 }
