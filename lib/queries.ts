@@ -261,7 +261,10 @@ export async function priceForPackage(
 
 export async function getPaymentConfigs(country: string): Promise<PaymentConfig[]> {
   const db = createClient();
-  const { data } = await db.from("payment_configs").select("*").eq("is_active", true).eq("country", country).order("sort_order");
+  // Always keep the home (PK) local methods (JazzCash/EasyPaisa) available, plus
+  // any methods for the visitor's own country — so IP geolocation never hides them.
+  const countries = Array.from(new Set([country, "PK"]));
+  const { data } = await db.from("payment_configs").select("*").eq("is_active", true).in("country", countries).order("sort_order");
   return (data ?? []).map((p: any) => ({
     id: p.id, country: p.country, provider: p.provider, display_name: p.display_name,
     description: p.description ?? "", account_details: p.account_details, qr_code_url: p.qr_code_url,
