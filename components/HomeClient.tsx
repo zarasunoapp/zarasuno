@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import type { Book, Category, Subcategory } from "@/lib/types";
-import type { HomeSection, Faq, FeaturedBook } from "@/lib/queries";
+import type { HomeSection, Faq, FeaturedBook, Testimonial } from "@/lib/queries";
 import LandingHero from "./LandingHero";
 import SignedInHero from "./SignedInHero";
 import MarketingSections from "./MarketingSections";
@@ -45,6 +45,7 @@ export default function HomeClient({
   subcategories,
   faqs,
   featuredBooks = [],
+  testimonials = [],
 }: {
   signedIn: boolean;
   sections: HomeSection[];
@@ -53,6 +54,7 @@ export default function HomeClient({
   subcategories: Subcategory[];
   faqs?: Faq[];
   featuredBooks?: FeaturedBook[];
+  testimonials?: Testimonial[];
 }) {
 
   // Build the app-home feed as an ordered list of blocks (carousels + category).
@@ -100,7 +102,7 @@ export default function HomeClient({
       </div>
 
       {/* Reviews + FAQ — just above the footer (shown for everyone) */}
-      <ReviewsFaq faqs={faqs} />
+      <ReviewsFaq faqs={faqs} testimonials={testimonials} />
 
       <OnboardingModal categories={categories} />
     </>

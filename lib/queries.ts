@@ -288,6 +288,24 @@ export async function getFaqs(): Promise<Faq[]> {
   return (data ?? []).map((f: any) => ({ id: f.id, question: f.question, answer: f.answer }));
 }
 
+export interface Testimonial {
+  id: string;
+  name: string;
+  title: string | null;
+  message: string;
+  rating: number;
+  avatar_url: string | null;
+}
+
+export async function getTestimonials(): Promise<Testimonial[]> {
+  const db = createClient();
+  const { data } = await db.from("testimonials").select("*").eq("is_active", true).order("sort_order", { ascending: true });
+  return (data ?? []).map((t: any) => ({
+    id: t.id, name: t.name, title: t.title ?? null, message: t.message,
+    rating: t.rating ?? 5, avatar_url: t.avatar_url ?? null,
+  }));
+}
+
 // Read an admin-controlled app_settings jsonb value by key (e.g. 'home_hero', 'brand').
 export async function getAppSetting<T = any>(key: string): Promise<T | null> {
   const db = createClient();

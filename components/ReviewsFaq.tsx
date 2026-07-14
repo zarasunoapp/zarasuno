@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import { Star, Quote, ChevronDown, HelpCircle } from "lucide-react";
-import type { Faq } from "@/lib/queries";
+import type { Faq, Testimonial } from "@/lib/queries";
 import Curve from "./Curve";
 
-const REVIEWS = [
-  { name: "Ayesha Khan", role: "Karachi", text: "I finish a whole book on my commute now — and the Urdu narrations feel like home. It's part of my daily ritual." },
-  { name: "Bilal Raza", role: "Lahore", text: "The summaries are gold. I read three times more since joining, and unlocking with coins couldn't be simpler." },
-  { name: "Hina Siddiqui", role: "Islamabad", text: "Gorgeous, calm design and excellent narrators. The free preview chapters sold me instantly." },
-  { name: "Omar Farooq", role: "Sydney", text: "Perfect for busy days — big ideas in minutes, and no subscription nonsense. Exactly what I wanted." },
-  { name: "Zara Malik", role: "Dubai", text: "The English & Urdu library is unmatched. My whole family listens now, from my kids to my mother." },
-  { name: "Daniyal Ahmed", role: "London", text: "Clean, fast, and the audio quality is superb. Honestly worth every single coin I've spent." },
+type Review = { name: string; role: string; text: string; rating: number; avatar: string | null };
+
+const FALLBACK_REVIEWS: Review[] = [
+  { name: "Ayesha Khan", role: "Karachi", text: "I finish a whole book on my commute now — and the Urdu narrations feel like home. It's part of my daily ritual.", rating: 5, avatar: null },
+  { name: "Bilal Raza", role: "Lahore", text: "The summaries are gold. I read three times more since joining, and unlocking with coins couldn't be simpler.", rating: 5, avatar: null },
+  { name: "Hina Siddiqui", role: "Islamabad", text: "Gorgeous, calm design and excellent narrators. The free preview chapters sold me instantly.", rating: 5, avatar: null },
+  { name: "Omar Farooq", role: "Sydney", text: "Perfect for busy days — big ideas in minutes, and no subscription nonsense. Exactly what I wanted.", rating: 5, avatar: null },
+  { name: "Zara Malik", role: "Dubai", text: "The English & Urdu library is unmatched. My whole family listens now, from my kids to my mother.", rating: 5, avatar: null },
+  { name: "Daniyal Ahmed", role: "London", text: "Clean, fast, and the audio quality is superb. Honestly worth every single coin I've spent.", rating: 5, avatar: null },
 ];
 
 const DEFAULT_FAQS = [
@@ -22,8 +24,14 @@ const DEFAULT_FAQS = [
   { q: "Do coins ever expire?", a: "Never. Your coins and unlocked books stay with your account for good." },
 ];
 
-export default function ReviewsFaq({ faqs }: { faqs?: Faq[] }) {
+export default function ReviewsFaq({ faqs, testimonials }: { faqs?: Faq[]; testimonials?: Testimonial[] }) {
   const faqItems = faqs && faqs.length ? faqs.map((f) => ({ q: f.question, a: f.answer })) : DEFAULT_FAQS;
+  const reviews: Review[] =
+    testimonials && testimonials.length
+      ? testimonials.map((t) => ({ name: t.name, role: t.title ?? "", text: t.message, rating: t.rating || 5, avatar: t.avatar_url }))
+      : FALLBACK_REVIEWS;
+  // duplicate so the marquee can loop seamlessly (and never looks empty with 1–2)
+  const loop = reviews.length >= 3 ? [...reviews, ...reviews] : [...reviews, ...reviews, ...reviews, ...reviews];
 
   return (
     <>
@@ -41,7 +49,7 @@ export default function ReviewsFaq({ faqs }: { faqs?: Faq[] }) {
           {/* marquee row — full screen width */}
           <div className="group relative w-full overflow-hidden">
             <div className="flex w-max gap-5 pl-5 animate-marquee group-hover:[animation-play-state:paused]">
-              {[...REVIEWS, ...REVIEWS].map((r, i) => (
+              {loop.map((r, i) => (
                 <figure
                   key={i}
                   className="w-[22rem] shrink-0 rounded-3xl bg-white p-7 text-left shadow-xl transition-transform duration-300 hover:-translate-y-1.5"
@@ -50,18 +58,23 @@ export default function ReviewsFaq({ faqs }: { faqs?: Faq[] }) {
                     <Quote className="h-8 w-8 text-gold-400" />
                     <div className="flex gap-0.5">
                       {Array.from({ length: 5 }).map((_, s) => (
-                        <Star key={s} className="h-4 w-4 fill-gold-400 text-gold-400" />
+                        <Star key={s} className={s < r.rating ? "h-4 w-4 fill-gold-400 text-gold-400" : "h-4 w-4 text-gray-200"} />
                       ))}
                     </div>
                   </div>
                   <blockquote className="mt-4 text-[15px] leading-relaxed text-gray-700">&ldquo;{r.text}&rdquo;</blockquote>
                   <figcaption className="mt-5 flex items-center gap-3 border-t border-gray-100 pt-4">
-                    <span className="grid h-10 w-10 place-items-center rounded-full bg-brand text-sm font-bold text-white">
-                      {r.name.charAt(0)}
-                    </span>
+                    {r.avatar ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={r.avatar} alt={r.name} className="h-10 w-10 rounded-full object-cover" />
+                    ) : (
+                      <span className="grid h-10 w-10 place-items-center rounded-full bg-brand text-sm font-bold text-white">
+                        {r.name.charAt(0)}
+                      </span>
+                    )}
                     <span>
                       <span className="block font-serif font-semibold text-brand-800">{r.name}</span>
-                      <span className="block text-xs text-gray-400">{r.role}</span>
+                      {r.role && <span className="block text-xs text-gray-400">{r.role}</span>}
                     </span>
                   </figcaption>
                 </figure>

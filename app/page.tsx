@@ -1,5 +1,5 @@
 import {
-  getSessionUser, getHomeSections, getAllBooks, getCategories, getSubcategories, getFaqs, getFeaturedBooks,
+  getSessionUser, getHomeSections, getAllBooks, getCategories, getSubcategories, getFaqs, getFeaturedBooks, getTestimonials,
 } from "@/lib/queries";
 import HomeClient from "@/components/HomeClient";
 
@@ -9,13 +9,14 @@ export default async function HomePage() {
   const user = await getSessionUser();
   const signedIn = !!user;
 
-  const [sections, allBooks, categories, subcategories, faqs, featuredBooks] = await Promise.all([
+  const [sections, allBooks, categories, subcategories, faqs, featuredBooks, testimonials] = await Promise.all([
     getHomeSections(signedIn),
     getAllBooks(),
     getCategories(),
     getSubcategories(),
     getFaqs(),
     getFeaturedBooks(),
+    getTestimonials(),
   ]);
 
   return (
@@ -27,6 +28,7 @@ export default async function HomePage() {
       subcategories={subcategories}
       faqs={faqs}
       featuredBooks={featuredBooks}
+      testimonials={testimonials}
     />
   );
 }
