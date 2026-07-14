@@ -23,6 +23,11 @@ export const metadata: Metadata = {
   title: "ZaraSuno — Listen to the world's best books",
   description:
     "Audiobooks & book summaries in English and Urdu. Unlock with coins, listen chapter by chapter.",
+  icons: {
+    icon: "/images/favicon.jpeg",
+    shortcut: "/images/favicon.jpeg",
+    apple: "/images/favicon.jpeg",
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
