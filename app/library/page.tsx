@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { History, Clock3, Heart, Play } from "lucide-react";
+import { History, Clock3, Heart, Play, BookCheck } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import { cn, formatDuration } from "@/lib/utils";
 import SignInPrompt from "@/components/SignInPrompt";
 
 const TABS = [
+  { id: "unlocked", label: "Unlocked", icon: BookCheck },
   { id: "history", label: "History", icon: History },
   { id: "progress", label: "In Progress", icon: Clock3 },
   { id: "favourites", label: "Favourites", icon: Heart },
@@ -23,9 +24,10 @@ interface Row {
 
 export default function LibraryPage() {
   const { ready, signedIn } = useStore();
-  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("history");
+  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("unlocked");
   const [progress, setProgress] = useState<Row[]>([]);
   const [favs, setFavs] = useState<any[]>([]);
+  const [unlockedBooks, setUnlockedBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,12 +36,15 @@ export default function LibraryPage() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const [prog, fav] = await Promise.all([
+      const [prog, fav, unl] = await Promise.all([
         supabase.from("listening_progress")
           .select("position_seconds, is_completed, last_listened_at, books(*, authors!books_author_id_fkey(name))")
           .eq("user_id", user.id).order("last_listened_at", { ascending: false }),
         supabase.from("favourites")
           .select("books(*, authors!books_author_id_fkey(name))").eq("user_id", user.id),
+        supabase.from("book_unlocks")
+          .select("created_at, books(*, authors!books_author_id_fkey(name))")
+          .eq("user_id", user.id).order("created_at", { ascending: false }),
       ]);
       setProgress((prog.data ?? []).filter((r: any) => r.books).map((r: any) => ({
         book: r.books,
@@ -47,6 +52,7 @@ export default function LibraryPage() {
         completed: r.is_completed,
       })));
       setFavs((fav.data ?? []).map((r: any) => r.books).filter(Boolean));
+      setUnlockedBooks((unl.data ?? []).map((r: any) => r.books).filter(Boolean));
       setLoading(false);
     })();
   }, [ready, signedIn]);
@@ -58,6 +64,7 @@ export default function LibraryPage() {
   const list =
     tab === "history" ? progress :
     tab === "progress" ? progress.filter((r) => !r.completed) :
+    tab === "unlocked" ? unlockedBooks.map((b) => ({ book: b, percent: 0, completed: false })) :
     favs.map((b) => ({ book: b, percent: 0, completed: false }));
 
   return (
@@ -86,7 +93,7 @@ export default function LibraryPage() {
       ) : (
         <div className="mt-6 space-y-3">
           {list.map((r) => (
-            <LibraryRow key={r.book.id} book={r.book} percent={r.percent} completed={r.completed} showProgress={tab !== "favourites"} />
+            <LibraryRow key={r.book.id} book={r.book} percent={r.percent} completed={r.completed} showProgress={tab === "history" || tab === "progress"} />
           ))}
         </div>
       )}

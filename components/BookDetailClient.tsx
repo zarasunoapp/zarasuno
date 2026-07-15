@@ -3,12 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Play, Lock, Heart, Download, Clock, ListMusic, Coins, Check, ChevronLeft, BookOpen,
 } from "lucide-react";
 import type { Author, Book, Chapter } from "@/lib/types";
 import { useStore } from "@/lib/store";
+import { createClient } from "@/lib/supabase/client";
 import { cn, formatDuration, formatClock } from "@/lib/utils";
 import Curve from "./Curve";
 import Carousel from "./Carousel";
@@ -37,6 +38,22 @@ export default function BookDetailClient({
 
   const unlocked = isBookUnlocked(book.id, book.is_free);
   const fav = isFavourite(book.id);
+
+  // Count this open exactly once (any entry point lands here). Fire-and-forget:
+  // never blocks navigation or surfaces an error. The ref guard keeps React
+  // Strict Mode / re-renders from double counting. Works for guests too.
+  const countedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (countedRef.current === book.id) return;
+    countedRef.current = book.id;
+    (async () => {
+      try {
+        await createClient().rpc("increment_book_click", { p_book_id: book.id });
+      } catch {
+        /* ignore — click counting must never affect the user */
+      }
+    })();
+  }, [book.id]);
 
   const flash = (m: string) => {
     setToast(m);

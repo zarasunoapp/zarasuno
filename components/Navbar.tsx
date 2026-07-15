@@ -72,9 +72,9 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <NotificationBell light />
             {signedIn ? (
               <>
+                <NotificationBell light />
                 <Link href="/coins" className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-gold-300 ring-1 ring-white/15 transition hover:bg-white/20">
                   <Coins className="h-4 w-4" />
                   {coins}

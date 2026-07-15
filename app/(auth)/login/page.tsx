@@ -35,7 +35,9 @@ export default function LoginPage() {
 
   const done = () => {
     // Full navigation so the server re-renders with the fresh session cookies.
-    window.location.href = "/";
+    // Honour ?next= (e.g. sent here from the coins page) — internal paths only.
+    const next = new URLSearchParams(window.location.search).get("next");
+    window.location.href = next && next.startsWith("/") ? next : "/";
   };
 
   // Turn Supabase auth errors into clear, user-friendly messages.
@@ -92,9 +94,11 @@ export default function LoginPage() {
 
   const google = async () => {
     setError(null);
+    const next = new URLSearchParams(window.location.search).get("next");
+    const cb = `${window.location.origin}/auth/callback${next && next.startsWith("/") ? `?next=${encodeURIComponent(next)}` : ""}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: cb },
     });
     if (error) {
       setError(

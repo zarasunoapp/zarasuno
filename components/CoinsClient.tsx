@@ -92,7 +92,7 @@ function Inner({ packages, configs, country }: { packages: CoinPackage[]; config
   };
 
   const pay = async (config: PaymentConfig) => {
-    if (!signedIn) return router.push("/login");
+    if (!signedIn) return router.push("/login?next=/coins");
     if (!pkg) return;
     if (config.provider === "stripe") {
       setBusy(true);
@@ -121,7 +121,7 @@ function Inner({ packages, configs, country }: { packages: CoinPackage[]; config
   };
 
   const applyPromo = async () => {
-    if (!signedIn) return router.push("/login");
+    if (!signedIn) return router.push("/login?next=/coins");
     if (!promo.trim() || applying) return;
     setApplying(true);
     try {
@@ -225,7 +225,7 @@ function Inner({ packages, configs, country }: { packages: CoinPackage[]; config
       <div className="mt-4 space-y-3">
         {/* Card (Stripe Elements) — always available */}
         <button
-          onClick={() => (signedIn ? setShowCard(true) : router.push("/login"))}
+          onClick={() => (signedIn ? setShowCard(true) : router.push("/login?next=/coins"))}
           className="flex w-full items-center gap-4 rounded-2xl border border-gray-200 p-4 text-left transition hover:border-brand hover:bg-brand-50/40"
         >
           <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600">
