@@ -72,7 +72,7 @@ export default function HomeClient({
       blocks.push({
         key: "categories",
         node: (
-          <div className="mx-auto max-w-[96rem]">
+          <div id="browse-categories" className="mx-auto max-w-[96rem] scroll-mt-24">
             <CategorySelector categories={categories} subcategories={subcategories} books={allBooks} />
           </div>
         ),

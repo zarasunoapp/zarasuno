@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Home, Library, User, Coins, Menu, X, LogIn } from "lucide-react";
 import Logo from "./Logo";
 import NotificationBell from "./NotificationBell";
+import SearchBar from "./SearchBar";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -72,6 +73,7 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2">
+            <SearchBar />
             {signedIn ? (
               <>
                 <NotificationBell light />
@@ -89,7 +91,7 @@ export default function Navbar() {
                   Sign in
                 </Link>
                 <Link href="/signup" className="btn-sweep hidden rounded-full bg-gold-400 px-5 py-2.5 text-sm font-semibold text-brand-900 shadow-soft sm:block">
-                  Get started
+                  Start Listening Free
                 </Link>
               </>
             )}
@@ -155,27 +157,29 @@ export default function Navbar() {
                 <LogIn className="h-4 w-4" /> Sign in
               </Link>
               <Link href="/signup" onClick={() => setOpen(false)} className="flex items-center justify-center gap-2 rounded-xl bg-gold-400 py-3 text-sm font-semibold text-brand-900">
-                Get started
+                Start Listening Free
               </Link>
             </>
           )}
         </div>
       </aside>
 
-      {/* Mobile bottom tab bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/10 bg-brand-900/95 backdrop-blur md:hidden">
-        <div className="grid grid-cols-4">
-          {navItems.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
-            return (
-              <Link key={href} href={href} className={cn("flex flex-col items-center gap-1 py-2.5 text-[11px] font-semibold", active ? "text-gold-300" : "text-white/55")}>
-                <Icon className="h-5 w-5" />
-                {label}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      {/* Mobile bottom tab bar — only for signed-in users */}
+      {signedIn && (
+        <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/10 bg-brand-900/95 backdrop-blur md:hidden">
+          <div className="grid grid-cols-4">
+            {navItems.map(({ href, label, icon: Icon }) => {
+              const active = pathname === href;
+              return (
+                <Link key={href} href={href} className={cn("flex flex-col items-center gap-1 py-2.5 text-[11px] font-semibold", active ? "text-gold-300" : "text-white/55")}>
+                  <Icon className="h-5 w-5" />
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </>
   );
 }

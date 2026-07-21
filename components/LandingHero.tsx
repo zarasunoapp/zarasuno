@@ -20,44 +20,40 @@ export default function LandingHero({ covers }: { covers: Book[] }) {
       <div className="relative mx-auto grid max-w-[96rem] items-center gap-10 px-4 sm:px-6 lg:grid-cols-2 lg:gap-6">
         {/* LEFT — copy */}
         <div className="animate-fade-up text-center lg:text-left">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-brand-700 shadow-soft">
-            <span className="flex gap-0.5">
-              {[0, 1, 2].map((i) => (
-                <Star key={i} className="h-3.5 w-3.5 fill-gold-400 text-gold-400" />
-              ))}
-            </span>
-            Loved by 50,000+ listeners
-          </span>
+          
 
           <h1 className="display mt-5 text-5xl leading-[0.98] sm:text-6xl lg:text-7xl">
-            Listen to the world&apos;s{" "}
+            Listen to the books you’ve been{" "}
             <span className="relative whitespace-nowrap text-gold-400">
-              best books
+              wanting
               <svg className="absolute -bottom-2 left-0 h-3 w-full text-gold-400/70" viewBox="0 0 200 12" preserveAspectRatio="none" fill="none">
                 <path d="M2 8C40 3 160 3 198 8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
               </svg>
             </span>{" "}
-            &amp; summaries.
+            to read.
           </h1>
 
-          <p className="mx-auto mt-6 max-w-lg text-lg leading-relaxed text-brand-100 lg:mx-0">
-            Big ideas from bestselling books — narrated chapter by chapter, in
-            English &amp; Urdu. Unlock with coins and start growing in minutes.
-          </p>
+          
 
-          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
-            <Link href="/signup" className="btn-gold flex w-full items-center justify-center gap-2 rounded-full px-7 py-4 text-base font-semibold sm:w-auto">
-              <Play className="h-4 w-4 fill-current" /> Start listening free
-            </Link>
-            <a href="#why" className="btn-sweep flex w-full items-center justify-center gap-2 rounded-full bg-white px-7 py-4 text-base font-semibold text-brand-700 shadow-soft hover:shadow-lg sm:w-auto">
-              Browse library <ArrowRight className="h-4 w-4" />
+          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
+            {/* Start listening free — with a floating "+50 free coins" popup */}
+            <div className="relative w-full sm:w-auto">
+              <span className="animate-float absolute -top-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-gold-grad px-3 py-1 text-[11px] font-extrabold text-brand-900 shadow-gold">
+                <Coins className="h-3.5 w-3.5" /> +50 free coins
+                <span className="absolute -bottom-1 left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 rounded-[2px] bg-gold-400" />
+              </span>
+              <Link href="/signup" className="btn-gold flex w-full items-center justify-center gap-2 rounded-full px-7 py-4 text-base font-semibold sm:w-auto">
+                <Play className="h-4 w-4 fill-current" /> Start listening free
+              </Link>
+            </div>
+            <a href="#browse-categories" className="btn-sweep flex w-full items-center justify-center gap-2 rounded-full bg-white px-7 py-4 text-base font-semibold text-brand-700 shadow-soft hover:shadow-lg sm:w-auto">
+              Explore your interest <ArrowRight className="h-4 w-4" />
             </a>
           </div>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-brand-100 lg:justify-start">
             <span className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-gold-400" /> 120+ titles</span>
             <span className="flex items-center gap-2"><Globe className="h-4 w-4 text-gold-400" /> English &amp; Urdu</span>
-            <span className="flex items-center gap-2"><Coins className="h-4 w-4 text-gold-400" /> 50 free coins</span>
           </div>
         </div>
 
@@ -129,9 +125,6 @@ export default function LandingHero({ covers }: { covers: Book[] }) {
           {/* floating chips */}
           <div className="absolute right-2 top-8 flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-brand-700 shadow-card sm:right-0">
             <Star className="h-3.5 w-3.5 fill-gold-400 text-gold-400" /> 4.9
-          </div>
-          <div className="absolute -left-1 bottom-16 flex rotate-[-6deg] items-center gap-1.5 rounded-full bg-gold-grad px-3 py-1.5 text-xs font-bold text-brand-900 shadow-gold">
-            <Coins className="h-4 w-4" /> +50 free
           </div>
           <div className="absolute -right-2 bottom-28 hidden items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-card sm:flex">
             <span className="grid h-8 w-8 place-items-center rounded-full bg-brand text-white"><Globe className="h-4 w-4" /></span>
