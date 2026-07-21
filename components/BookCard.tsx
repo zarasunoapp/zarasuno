@@ -93,16 +93,6 @@ export default function BookCard({ book, fluid = false }: { book: Book; index?: 
             )}
           </div>
         </div>
-
-        <Link
-          href={`/book/${book.id}`}
-          className={cn(
-            "mt-2 flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition",
-            showLocked ? "bg-gold-grad text-brand-900 shadow-gold" : "bg-brand-900 text-white hover:bg-black"
-          )}
-        >
-          {showLocked ? "Unlock now" : <><Play className="h-4 w-4 fill-current" /> Listen now</>}
-        </Link>
       </div>
     </div>
   );

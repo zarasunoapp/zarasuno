@@ -41,7 +41,7 @@ export default function CategorySelector({
     <section className="px-4 sm:px-6">
       <div className="mb-8 text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-500">Explore the shelves</p>
-        <h2 className="display mt-1 text-3xl text-gray-900 sm:text-4xl">Browse by category</h2>
+        <h2 className="display mt-1 text-3xl text-gray-900 sm:text-4xl">Browse by interest</h2>
       </div>
 
       {/* ===== Level 1 — categories as simple pills ===== */}

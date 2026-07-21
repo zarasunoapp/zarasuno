@@ -6,12 +6,24 @@ import type { HomeSection, Faq, FeaturedBook, Testimonial } from "@/lib/queries"
 import LandingHero from "./LandingHero";
 import SignedInHero from "./SignedInHero";
 import MarketingSections from "./MarketingSections";
+import FeaturedBooks from "./FeaturedBooks";
 import Curve from "./Curve";
 import Carousel from "./Carousel";
 import CategorySelector from "./CategorySelector";
 import OnboardingModal from "./OnboardingModal";
 import ReviewsFaq from "./ReviewsFaq";
 import Reveal from "./Reveal";
+
+// Feed order: books of the month → featured → most popular → recently added →
+// language (Urdu) → everything else. Category carousels are dropped (users
+// explore via "Browse by interest" instead).
+const ORDER: Record<string, number> = {
+  books_of_month: 1,
+  most_popular: 2,
+  recently_added: 3,
+  language: 4,
+};
+const prio = (t: string) => ORDER[t] ?? 5;
 
 const SUBTITLES: Record<string, string> = {
   books_of_month: "Hand-picked by our editors this month",
@@ -57,28 +69,39 @@ export default function HomeClient({
   testimonials?: Testimonial[];
 }) {
 
-  // Build the app-home feed as an ordered list of blocks (carousels + category).
+  // Build the app-home feed in the desired order.
+  const feedSections = sections
+    .filter((s) => s.type !== "category") // drop category carousels (e.g. "Self Development")
+    .sort((a, b) => prio(a.type) - prio(b.type));
+
+  const carouselBlock = (s: HomeSection) => ({
+    key: s.id,
+    node: (
+      <div className="mx-auto max-w-[96rem]">
+        <Carousel eyebrow={EYEBROWS[s.type]} title={s.title} subtitle={SUBTITLES[s.type]} books={s.books} />
+      </div>
+    ),
+  });
+
   const blocks: { key: string; node: ReactNode }[] = [];
-  sections.forEach((s, i) => {
+  // 1. Books of the Month
+  const bom = feedSections.find((s) => s.type === "books_of_month");
+  if (bom) blocks.push(carouselBlock(bom));
+  // 2. Featured Books
+  if (featuredBooks.length > 0) blocks.push({ key: "featured", node: <FeaturedBooks featured={featuredBooks} /> });
+  // 3. the rest (most popular → recently added → Urdu → …)
+  feedSections.filter((s) => s.type !== "books_of_month").forEach((s) => blocks.push(carouselBlock(s)));
+  // 4. Browse by interest
+  if (categories.length > 0) {
     blocks.push({
-      key: s.id,
+      key: "categories",
       node: (
-        <div className="mx-auto max-w-[96rem]">
-          <Carousel eyebrow={EYEBROWS[s.type]} title={s.title} subtitle={SUBTITLES[s.type]} books={s.books} />
+        <div id="browse-categories" className="mx-auto max-w-[96rem] scroll-mt-24">
+          <CategorySelector categories={categories} subcategories={subcategories} books={allBooks} />
         </div>
       ),
     });
-    if (i === 0 && categories.length > 0) {
-      blocks.push({
-        key: "categories",
-        node: (
-          <div id="browse-categories" className="mx-auto max-w-[96rem] scroll-mt-24">
-            <CategorySelector categories={categories} subcategories={subcategories} books={allBooks} />
-          </div>
-        ),
-      });
-    }
-  });
+  }
 
   return (
     <>
@@ -87,7 +110,7 @@ export default function HomeClient({
       ) : (
         <>
           <LandingHero covers={allBooks} />
-          <MarketingSections featured={featuredBooks} />
+          <MarketingSections />
         </>
       )}
 
