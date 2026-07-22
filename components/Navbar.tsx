@@ -56,10 +56,12 @@ export default function Navbar() {
             scrolled ? "bg-brand-900/95 shadow-lg backdrop-blur-xl" : "bg-brand-900/85 shadow-md backdrop-blur-xl"
           )}
         >
-          <Logo light />
+          <div className="flex shrink-0 items-center">
+            <Logo light />
+          </div>
 
-          {/* center nav — white pills, green text/icons */}
-          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-2 md:flex">
+          {/* center nav — white pills, green text/icons (in-flow, never overlaps) */}
+          <nav className="hidden flex-1 items-center justify-center gap-2 px-2 lg:flex">
             {NAV.map(({ href, label, icon: Icon }) => {
               const active = pathname === href;
               return (
@@ -80,7 +82,7 @@ export default function Navbar() {
             })}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <SearchBar />
             {signedIn ? (
               <>
@@ -89,7 +91,7 @@ export default function Navbar() {
                   <Coins className="h-4 w-4" />
                   {coins}
                 </Link>
-                <Link href="/profile" className="hidden h-9 w-9 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/15 transition hover:bg-white/20 md:grid">
+                <Link href="/profile" className="hidden h-9 w-9 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/15 transition hover:bg-white/20 lg:grid">
                   <User className="h-5 w-5" />
                 </Link>
               </>
@@ -104,7 +106,7 @@ export default function Navbar() {
               </>
             )}
 
-            <button onClick={() => setOpen(true)} className="grid h-9 w-9 place-items-center rounded-full text-white transition hover:bg-white/10 md:hidden">
+            <button onClick={() => setOpen(true)} className="grid h-9 w-9 place-items-center rounded-full text-white transition hover:bg-white/10 lg:hidden">
               <Menu className="h-5 w-5" />
             </button>
           </div>

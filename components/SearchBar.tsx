@@ -97,8 +97,8 @@ export default function SearchBar() {
 
   return (
     <>
-      {/* Desktop inline pill */}
-      <div ref={boxRef} className="relative hidden lg:block">
+      {/* Desktop inline pill — only on wide screens so it can't crowd the nav */}
+      <div ref={boxRef} className="relative hidden xl:block">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
         <input
           value={q}
@@ -124,7 +124,7 @@ export default function SearchBar() {
       <button
         onClick={() => { load(); setOpenMobile(true); }}
         aria-label="Search"
-        className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/15 transition hover:bg-white/20 lg:hidden"
+        className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/15 transition hover:bg-white/20 xl:hidden"
       >
         <Search className="h-[18px] w-[18px]" />
       </button>
