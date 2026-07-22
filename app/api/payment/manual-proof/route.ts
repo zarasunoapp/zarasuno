@@ -28,13 +28,18 @@ export async function POST(req: Request) {
   if (!pkg) return NextResponse.json({ error: "package_not_found" }, { status: 404 });
 
   // re-validate any discount code server-side → record the discounted amount
+  // and the promocode id (for influencer revenue attribution on the txn).
   let chargeAmount = Number(pkg.price);
+  let promocodeId: string | null = null;
   if (promoCode) {
     const { data: v } = await supabase.rpc("validate_discount_promo", {
       p_code: promoCode,
       p_package_id: pkg.id,
     });
-    if (v?.success) chargeAmount = Number(v.final_price);
+    if (v?.success) {
+      chargeAmount = Number(v.final_price);
+      promocodeId = v.promocode_id ?? null;
+    }
   }
 
   const admin = createAdminClient();
@@ -66,6 +71,7 @@ export async function POST(req: Request) {
     payment_status: "pending",        // admin verifies the proof, then credits
     payment_reference: reference || null,
     payment_proof_url: proofUrl,
+    promocode_id: promocodeId,        // influencer attribution (null if no promo)
   });
   if (insErr) return NextResponse.json({ error: "insert_failed", detail: insErr.message }, { status: 500 });
 
