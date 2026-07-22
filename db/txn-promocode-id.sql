@@ -1,9 +1,19 @@
--- Make credit_coin_purchase return details so the website can email the buyer
--- exactly once (idempotent: only the first call for a Stripe reference returns
--- credited=true). Keeps the promo-redemption logic. Run once in Supabase.
+-- ============================================================================
+-- Stamp the applied promo code onto the purchase transaction.
+-- On a completed coin purchase with a promo applied:
+--   transactions.promocode_id = <applied promocode id>
+-- promocode_redemptions is still inserted as before ('uses' count comes from it).
+-- Run once in the Supabase SQL editor.
+-- ============================================================================
 
-drop function if exists public.credit_coin_purchase(uuid, integer, numeric, uuid, text, uuid);
+-- 1) New column on transactions (nullable; only set when a promo was applied).
+alter table public.transactions
+  add column if not exists promocode_id uuid references public.promocodes(id);
 
+create index if not exists idx_txn_promocode on public.transactions(promocode_id);
+
+-- 2) Update the active credit RPC (jsonb version) to write promocode_id.
+--    Signature unchanged — it already receives p_promocode_id.
 create or replace function public.credit_coin_purchase(
   p_user_id uuid,
   p_coins integer,
