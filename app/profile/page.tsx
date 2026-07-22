@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Coins, Bell, Receipt, LogOut, Trash2, Check, Globe, MapPin, Save, Loader2 } from "lucide-react";
+import { Coins, Bell, Receipt, LogOut, Trash2, Check, Globe, MapPin, Save, Loader2, BookLock } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ import Avatar from "@/components/Avatar";
 import type { Category } from "@/lib/types";
 
 type Lang = { code: string; name: string };
-const TABS = ["Categories", "Transactions", "Notifications"] as const;
+const TABS = ["Categories", "Wallet", "Notifications"] as const; // Wallet = purchases + unlocks
 const COUNTRIES = ["PK", "IN", "US", "AE", "UK"];
 
 export default function ProfilePage() {
@@ -39,7 +39,7 @@ export default function ProfilePage() {
       const [cats, langs, tx, nt] = await Promise.all([
         supabase.from("categories").select("*").eq("is_active", true).order("sort_order"),
         supabase.from("languages").select("code, name").eq("is_active", true).order("name"),
-        user ? supabase.from("transactions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
+        user ? supabase.from("transactions").select("*, books(title)").eq("user_id", user.id).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
         supabase.from("notifications").select("*").order("created_at", { ascending: false }),
       ]);
       setCategories((cats.data ?? []).map((c: any) => ({ id: c.id, name: c.name, slug: c.slug, icon: c.icon_url || "📚", sort_order: c.sort_order, is_active: c.is_active })));
@@ -160,19 +160,29 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {tab === "Transactions" && (
+        {tab === "Wallet" && (
           <ul className="space-y-2">
-            {txns.length === 0 && <li className="py-10 text-center text-gray-400">No transactions yet.</li>}
-            {txns.map((t) => (
-              <li key={t.id} className="flex items-center gap-4 rounded-2xl border border-gray-100 p-4">
-                <span className={cn("grid h-10 w-10 place-items-center rounded-full", t.coin_change > 0 ? "bg-brand-50 text-brand-600" : "bg-rose-50 text-rose-500")}><Receipt className="h-5 w-5" /></span>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900 capitalize">{t.type.replace("_", " ")}{t.amount ? ` · ${t.currency} ${Number(t.amount).toLocaleString()}` : ""}</p>
-                  <p className="text-xs text-gray-400">{new Date(t.created_at).toLocaleDateString()} · <span className={cn("font-medium", t.payment_status === "pending" ? "text-gold-600" : "text-gray-400")}>{t.payment_status}</span></p>
-                </div>
-                <span className={cn("font-semibold", t.coin_change > 0 ? "text-brand-600" : "text-rose-500")}>{t.coin_change > 0 ? "+" : ""}{t.coin_change}</span>
-              </li>
-            ))}
+            {txns.length === 0 && <li className="py-10 text-center text-gray-400">No wallet activity yet.</li>}
+            {txns.map((t) => {
+              const isUnlock = t.type === "spend" && t.books?.title;
+              const label = isUnlock
+                ? `Unlocked · ${t.books.title}`
+                : t.type === "purchase" ? "Coins purchased"
+                : t.type === "admin_grant" ? "Free coins"
+                : t.type.replace("_", " ");
+              return (
+                <li key={t.id} className="flex items-center gap-4 rounded-2xl border border-gray-100 p-4">
+                  <span className={cn("grid h-10 w-10 place-items-center rounded-full", t.coin_change > 0 ? "bg-brand-50 text-brand-600" : "bg-rose-50 text-rose-500")}>
+                    {isUnlock ? <BookLock className="h-5 w-5" /> : <Receipt className="h-5 w-5" />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium capitalize text-gray-900">{label}{t.amount ? ` · ${t.currency} ${Number(t.amount).toLocaleString()}` : ""}</p>
+                    <p className="text-xs text-gray-400">{new Date(t.created_at).toLocaleDateString()} · <span className={cn("font-medium", t.payment_status === "pending" ? "text-gold-600" : "text-gray-400")}>{t.payment_status}</span></p>
+                  </div>
+                  <span className={cn("shrink-0 font-semibold", t.coin_change > 0 ? "text-brand-600" : "text-rose-500")}>{t.coin_change > 0 ? "+" : ""}{t.coin_change}</span>
+                </li>
+              );
+            })}
           </ul>
         )}
 

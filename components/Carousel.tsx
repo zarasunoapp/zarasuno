@@ -60,7 +60,7 @@ export default function Carousel({
 
       <div
         ref={scroller}
-        className="no-scrollbar fade-x flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-4 pb-3 sm:px-6"
+        className="no-scrollbar fade-x flex snap-x snap-mandatory gap-3.5 overflow-x-auto scroll-smooth px-4 pb-3 sm:px-6"
       >
         {books.map((b, i) => (
           <div key={b.id} className="snap-start">

@@ -60,14 +60,18 @@ export default function BookDetailClient({
     setTimeout(() => setToast(null), 2600);
   };
 
+  // After signup / buying coins, come back to this book to finish unlocking.
+  const toCoins = `/coins?need=${book.coin_price}&book=${book.id}`;
+  const toBuy = signedIn ? toCoins : `/signup?next=${encodeURIComponent(toCoins)}`;
+
   const handleUnlock = async () => {
-    if (!signedIn) return router.push("/login");
-    if (coins < book.coin_price) return router.push("/coins?need=" + book.coin_price);
+    if (!signedIn) return router.push(`/signup?next=${encodeURIComponent(toCoins)}`);
+    if (coins < book.coin_price) return router.push(toCoins);
     setBusy(true);
     const res = await unlockBook(book.id);
     setBusy(false);
     if (res.ok) flash(`Unlocked! ${book.coin_price} coins spent.`);
-    else if (res.reason === "insufficient_coins") router.push("/coins?need=" + book.coin_price);
+    else if (res.reason === "insufficient_coins") router.push(toCoins);
     else flash("Something went wrong. Please try again.");
   };
 
@@ -76,12 +80,12 @@ export default function BookDetailClient({
 
   const handleDownload = () => {
     if (unlocked || hasPreview) setShowDownload(true);
-    else router.push("/coins?need=" + book.coin_price);
+    else router.push(toBuy);
   };
 
   // Open the eBook file via a short-lived signed URL (server checks unlock).
   const openEbook = async () => {
-    if (!unlocked) return router.push("/coins?need=" + book.coin_price);
+    if (!unlocked) return router.push(toBuy);
     try {
       const res = await fetch(`/api/ebook?book=${book.id}`);
       const data = await res.json();

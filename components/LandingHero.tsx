@@ -1,12 +1,20 @@
-import Image from "next/image";
 import Link from "next/link";
-import { Play, Star, Sparkles, Coins, Globe, ArrowRight, SkipBack, SkipForward, Heart } from "lucide-react";
+import { Play, Star, Sparkles, Coins, Globe, ArrowRight } from "lucide-react";
 import type { Book } from "@/lib/types";
+import type { HeroFeature } from "@/lib/queries";
+import HeroPhone from "./HeroPhone";
 
 // Dark, modern hero that visually merges with the navbar above it. Bold editorial
 // headline on the left, an animated app showcase on the right.
-export default function LandingHero({ covers }: { covers: Book[] }) {
-  const [c0, c1, c2] = covers;
+export default function LandingHero({ covers, heroFeature }: { covers: Book[]; heroFeature?: HeroFeature | null }) {
+  const [c0] = covers;
+  // Prefer the admin-selected hero book (real book + 1-min sample); else fall
+  // back to the newest cover with no audio.
+  const phone = heroFeature
+    ? { bookId: heroFeature.book_id, title: heroFeature.title, author: heroFeature.author_name, coverUrl: heroFeature.cover_url, sampleUrl: heroFeature.sample_audio_url, sampleLabel: heroFeature.sample_label }
+    : c0
+    ? { bookId: c0.id, title: c0.title, author: c0.author_name, coverUrl: c0.cover_url, sampleUrl: null, sampleLabel: "Now playing" }
+    : null;
 
   return (
     <section className="grain relative -mt-20 overflow-hidden bg-brand-900 pb-24 pt-32 text-white sm:pt-36">
@@ -38,9 +46,9 @@ export default function LandingHero({ covers }: { covers: Book[] }) {
           <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
             {/* Start listening free — with a floating "+50 free coins" popup */}
             <div className="relative w-full sm:w-auto">
-              <span className="animate-float absolute -top-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-gold-grad px-3 py-1 text-[11px] font-extrabold text-brand-900 shadow-gold">
-                <Coins className="h-3.5 w-3.5" /> +50 free coins
-                <span className="absolute -bottom-1 left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 rounded-[2px] bg-gold-400" />
+              <span className="animate-float absolute -top-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-brand-700 shadow-card ring-1 ring-black/5">
+                <Coins className="h-3.5 w-3.5 text-gold-500" /> +50 free coins
+                <span className="absolute -bottom-1 left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 rounded-[2px] bg-white" />
               </span>
               <Link href="/signup" className="btn-gold flex w-full items-center justify-center gap-2 rounded-full px-7 py-4 text-base font-semibold sm:w-auto">
                 <Play className="h-4 w-4 fill-current" /> Start listening free
@@ -63,63 +71,16 @@ export default function LandingHero({ covers }: { covers: Book[] }) {
           <div className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 animate-spin-slow rounded-full opacity-40 blur-2xl [background:conic-gradient(from_0deg,rgba(217,169,76,0.55),rgba(62,138,106,0.4),rgba(217,169,76,0.55))]" />
           <div className="pointer-events-none absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-400/25 blur-3xl" />
 
-          {/* phone */}
-          {c0 && (
-            <div className="relative w-60 rotate-[-4deg] rounded-[2.75rem] bg-gradient-to-b from-brand-950 to-black p-2.5 shadow-2xl ring-1 ring-white/15 transition-transform duration-500 hover:rotate-0 sm:w-72">
-              <div className="relative overflow-hidden rounded-[2.25rem] bg-white p-4">
-                {/* status notch */}
-                <div className="mx-auto mb-4 h-1.5 w-16 rounded-full bg-gray-200" />
-
-                {/* cover */}
-                <div className="relative aspect-square w-full overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/5">
-                  <Image src={c0.cover_url} alt={c0.title} fill priority sizes="288px" className="object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                  <span className="absolute left-2.5 top-2.5 flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold text-brand-700 backdrop-blur">
-                    <span className="relative flex h-1.5 w-1.5"><span className="live-dot absolute h-1.5 w-1.5 rounded-full bg-rose-500" /></span>
-                    Now playing
-                  </span>
-                </div>
-
-                {/* title */}
-                <div className="mt-4 flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate font-serif text-lg font-semibold text-gray-900">{c0.title}</p>
-                    <p className="truncate text-xs text-gray-400">{c0.author_name}</p>
-                  </div>
-                  <Heart className="mt-1 h-5 w-5 shrink-0 fill-rose-500 text-rose-500" />
-                </div>
-
-                {/* progress */}
-                <div className="mt-4">
-                  <div className="h-1.5 overflow-hidden rounded-full bg-gray-100">
-                    <div className="animate-progress h-full rounded-full bg-gold-grad" />
-                  </div>
-                  <div className="mt-1.5 flex justify-between text-[10px] text-gray-400">
-                    <span>4:20</span>
-                    <span>12:00</span>
-                  </div>
-                </div>
-
-                {/* controls */}
-                <div className="mt-4 flex items-center justify-center gap-6 text-brand-700">
-                  <SkipBack className="h-5 w-5 fill-current opacity-80" />
-                  <span className="grid h-14 w-14 place-items-center rounded-full bg-gold-grad text-brand-900 shadow-gold">
-                    <Play className="h-6 w-6 translate-x-0.5 fill-current" />
-                  </span>
-                  <SkipForward className="h-5 w-5 fill-current opacity-80" />
-                </div>
-
-                {/* equalizer footer */}
-                <div className="mt-4 flex items-center justify-center gap-1.5 rounded-2xl bg-brand-50 py-2.5 ring-1 ring-brand-100">
-                  <span className="flex items-end gap-0.5 text-brand-500">
-                    {[0, 0.12, 0.24, 0.36, 0.48, 0.2].map((d, i) => (
-                      <span key={i} className="eq-bar bg-current" style={{ animationDelay: `${d}s`, height: `${8 + ((i * 5) % 12)}px` }} />
-                    ))}
-                  </span>
-                  <span className="ml-2 text-[11px] font-medium text-brand-700">1.5× speed</span>
-                </div>
-              </div>
-            </div>
+          {/* phone — real, admin-selected book with a playable 1-min sample */}
+          {phone && (
+            <HeroPhone
+              bookId={phone.bookId}
+              title={phone.title}
+              author={phone.author}
+              coverUrl={phone.coverUrl}
+              sampleUrl={phone.sampleUrl}
+              sampleLabel={phone.sampleLabel}
+            />
           )}
 
           {/* floating chips */}

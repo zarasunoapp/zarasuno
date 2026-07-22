@@ -28,16 +28,17 @@ export default function MarketingSections() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {STEPS.map((s, i) => (
-            <div key={s.title} className="relative rounded-2xl bg-white/5 p-5 ring-1 ring-white/10 backdrop-blur-sm">
-              <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gold-grad text-brand-900 shadow-gold">
-                  <s.icon className="h-5 w-5" />
-                </span>
-                <span className="font-serif text-2xl font-bold text-white/25">{i + 1}</span>
-              </div>
-              <h3 className="mt-4 font-serif text-lg font-semibold text-white">{s.title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-brand-100">{s.text}</p>
+          {STEPS.map((s) => (
+            <div
+              key={s.title}
+              className="group relative overflow-hidden rounded-3xl bg-white/[0.06] p-6 ring-1 ring-white/10 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:bg-white/[0.1] hover:ring-gold-400/40"
+            >
+              <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gold-400/10 blur-2xl transition-opacity group-hover:opacity-100 sm:opacity-0" />
+              <span className="grid h-14 w-14 place-items-center rounded-2xl bg-gold-grad text-brand-900 shadow-gold transition-transform group-hover:scale-105">
+                <s.icon className="h-6 w-6" />
+              </span>
+              <h3 className="mt-5 font-serif text-lg font-semibold text-white">{s.title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-brand-100">{s.text}</p>
             </div>
           ))}
         </div>

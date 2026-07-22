@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, X, Loader2 } from "lucide-react";
@@ -18,6 +18,18 @@ export default function SearchBar() {
   const [loading, setLoading] = useState(false);
   const [openDesktop, setOpenDesktop] = useState(false);
   const [openMobile, setOpenMobile] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  // close the desktop dropdown when clicking/tapping anywhere outside it
+  useEffect(() => {
+    if (!openDesktop) return;
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpenDesktop(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("touchstart", onDown);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("touchstart", onDown); };
+  }, [openDesktop]);
 
   const load = async () => {
     if (all || loading) return;
@@ -60,7 +72,7 @@ export default function SearchBar() {
       {loading && !all ? (
         <div className="flex items-center gap-2 px-4 py-6 text-sm text-gray-400"><Loader2 className="h-4 w-4 animate-spin" /> Loading books…</div>
       ) : q.trim() === "" ? (
-        <p className="px-4 py-6 text-center text-sm text-gray-400">Search by book, author, or category.</p>
+        <p className="px-4 py-6 text-center text-sm text-gray-400">Search by book, author, or keywords.</p>
       ) : results.length === 0 ? (
         <p className="px-4 py-6 text-center text-sm text-gray-400">No matches for “{q}”.</p>
       ) : (
@@ -86,7 +98,7 @@ export default function SearchBar() {
   return (
     <>
       {/* Desktop inline pill */}
-      <div className="relative hidden lg:block">
+      <div ref={boxRef} className="relative hidden lg:block">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
         <input
           value={q}
@@ -102,12 +114,9 @@ export default function SearchBar() {
           </button>
         )}
         {openDesktop && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setOpenDesktop(false)} />
-            <div className="absolute left-0 top-12 z-50 w-80 overflow-hidden rounded-2xl bg-white py-1 shadow-2xl ring-1 ring-black/10">
-              <Suggestions onPick={() => setOpenDesktop(false)} />
-            </div>
-          </>
+          <div className="absolute left-0 top-12 z-50 w-80 overflow-hidden rounded-2xl bg-white py-1 shadow-2xl ring-1 ring-black/10">
+            <Suggestions onPick={() => setOpenDesktop(false)} />
+          </div>
         )}
       </div>
 

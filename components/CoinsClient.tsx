@@ -3,12 +3,14 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Coins, Check, Star, CreditCard, QrCode, Ticket, Sparkles, ShieldCheck, Upload, Info, Loader2,
+  Coins, Check, Star, CreditCard, QrCode, Ticket, Sparkles, ShieldCheck, Upload, Info, Loader2, X, Receipt, BookLock, History,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import type { CoinPackage, PaymentConfig } from "@/lib/types";
 import StripeCardModal from "./StripeCardModal";
+import PageLoader from "./PageLoader";
 
 type AppliedPromo = {
   code: string;
@@ -36,7 +38,7 @@ const PROMO_ERRORS: Record<string, string> = {
 
 export default function CoinsClient(props: { packages: CoinPackage[]; configs: PaymentConfig[]; country: string }) {
   return (
-    <Suspense fallback={<div className="py-24 text-center text-gray-400">Loading…</div>}>
+    <Suspense fallback={<PageLoader />}>
       <Inner {...props} />
     </Suspense>
   );
@@ -47,7 +49,11 @@ function Inner({ packages, configs, country }: { packages: CoinPackage[]; config
   const router = useRouter();
   const params = useSearchParams();
   const need = Number(params.get("need") || 0);
+  const bookParam = params.get("book"); // came here to unlock this book
   const [busy, setBusy] = useState(false);
+
+  // after coins are credited, send them back to the book to finish unlocking
+  const afterBuy = () => { if (bookParam) setTimeout(() => router.push(`/book/${bookParam}`), 1200); };
 
   // Returning from Stripe → verify the session, then refresh the balance.
   useEffect(() => {
@@ -59,10 +65,11 @@ function Inner({ packages, configs, country }: { packages: CoinPackage[]; config
           if (sid) await fetch(`/api/stripe/verify?session_id=${sid}`);
         } catch {}
         await refresh();
-        setToast("Payment successful! Coins added to your balance. 🎉");
+        setToast(bookParam ? "Coins added! Taking you back to the book…" : "Payment successful! Coins added to your balance. 🎉");
         setTimeout(() => setToast(null), 4000);
         // clean the ?success/session_id from the URL
         window.history.replaceState({}, "", "/coins");
+        afterBuy();
       })();
     } else if (params.get("canceled")) {
       setToast("Payment canceled.");
@@ -78,6 +85,35 @@ function Inner({ packages, configs, country }: { packages: CoinPackage[]; config
   const [applying, setApplying] = useState(false);
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+
+  // wallet / transaction history (coin purchases + book unlocks), newest first
+  type Txn = { id: string; type: string; coins: number; created_at: string; title: string | null; amount: number | null; currency: string | null; status: string | null };
+  const [wallet, setWallet] = useState<Txn[] | null>(null);
+  useEffect(() => {
+    if (!signedIn) { setWallet([]); return; }
+    (async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("id, type, coin_change, amount, currency, payment_status, created_at, books(title)")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) console.error("wallet history:", error.message);
+      setWallet(
+        (data ?? []).map((t: any) => ({
+          id: t.id,
+          type: t.type,
+          coins: Number(t.coin_change ?? 0),
+          created_at: t.created_at,
+          title: t.books?.title ?? null,
+          amount: t.amount != null ? Number(t.amount) : null,
+          currency: t.currency ?? null,
+          status: t.payment_status ?? null,
+        }))
+      );
+    })();
+    // re-fetch whenever the balance changes (a purchase/unlock just happened)
+  }, [signedIn, coins]);
 
   const pkg = packages.find((p) => p.id === selected) ?? packages[0];
 
@@ -176,6 +212,56 @@ function Inner({ packages, configs, country }: { packages: CoinPackage[]; config
           </p>
         )}
       </div>
+
+      {/* Wallet / transaction history — coin purchases + book unlocks */}
+      {signedIn && (
+        <div className="mt-6 overflow-hidden rounded-3xl bg-white shadow-card ring-1 ring-black/5">
+          <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4 sm:px-6">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-50 text-brand-700"><History className="h-5 w-5" /></div>
+            <div>
+              <h3 className="text-base font-bold text-gray-900">Wallet history</h3>
+              <p className="text-xs text-gray-400">Your coin purchases and unlocked books</p>
+            </div>
+          </div>
+
+          {wallet === null ? (
+            <PageLoader variant="inline" label="Loading history…" />
+          ) : wallet.length === 0 ? (
+            <div className="px-6 py-10 text-center text-sm text-gray-400">No transactions yet. Buy coins to get started.</div>
+          ) : (
+            <ul className="no-scrollbar max-h-80 divide-y divide-gray-50 overflow-y-auto">
+              {wallet.map((t) => {
+                const isUnlock = t.type === "spend";
+                const label = isUnlock
+                  ? (t.title ? `Unlocked · ${t.title}` : "Book unlocked")
+                  : t.type === "purchase" ? "Coins purchased"
+                  : t.type === "admin_grant" ? "Free coins"
+                  : t.type.replace(/_/g, " ");
+                const d = new Date(t.created_at);
+                return (
+                  <li key={t.id} className="flex items-center gap-3 px-5 py-3.5 sm:px-6">
+                    <div className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", isUnlock ? "bg-clay-50 text-clay" : "bg-gold-100 text-gold-600")}>
+                      {isUnlock ? <BookLock className="h-5 w-5" /> : <Receipt className="h-5 w-5" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-gray-900">{label}</p>
+                      <p className="text-xs text-gray-400">
+                        {d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })} · {d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                        {!isUnlock && t.amount != null && t.currency ? ` · ${t.currency} ${t.amount.toLocaleString()}` : ""}
+                        {!isUnlock && t.status === "pending" ? " · pending" : ""}
+                      </p>
+                    </div>
+                    <span className={cn("shrink-0 font-serif text-sm font-bold tabular-nums", isUnlock ? "text-clay" : "text-brand-700")}>
+                      {isUnlock ? "−" : "+"}{Math.abs(t.coins)}
+                      <span className="ml-1 text-[11px] font-medium text-gray-400">coins</span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
 
       <h2 className="mt-10 display text-2xl text-gray-900 sm:text-3xl">Choose a coin pack</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -304,7 +390,7 @@ function Inner({ packages, configs, country }: { packages: CoinPackage[]; config
           pkg={pkg}
           promoCode={activePromoCode}
           onClose={() => setShowCard(false)}
-          onSuccess={async (m) => { setShowCard(false); setAppliedPromo(null); setPromo(""); await refresh(); flash(m); }}
+          onSuccess={async (m) => { setShowCard(false); setAppliedPromo(null); setPromo(""); await refresh(); flash(bookParam ? "Coins added! Taking you back to the book…" : m); afterBuy(); }}
         />
       )}
 
@@ -398,9 +484,12 @@ function ManualPaymentModal({ config, pkg, amount, onClose, onDone }: { config: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
-      <div className="max-h-[90vh] w-full max-w-md animate-fade-up overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl" onClick={(e) => e.stopPropagation()}>
+      <div className="relative max-h-[90vh] w-full max-w-md animate-fade-up overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl" onClick={(e) => e.stopPropagation()}>
+        <button onClick={onClose} aria-label="Close" className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700">
+          <X className="h-5 w-5" />
+        </button>
         <h3 className="font-serif text-xl font-semibold text-gray-900">{config.display_name}</h3>
-        <p className="mt-1 text-sm text-gray-500">{config.description}</p>
+        <p className="mt-1 pr-8 text-sm text-gray-500">{config.description}</p>
 
         <div className="mt-4 rounded-2xl border border-gray-100 p-4 text-center">
           {/* QR code pulled from payment_configs.qr_code_url */}

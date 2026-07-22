@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Mail, User, KeyRound, ArrowRight, Loader2, CheckCircle2, Eye, EyeOff, Star, Quote, Phone } from "lucide-react";
@@ -17,6 +17,14 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [registered, setRegistered] = useState(false);
+  const [nextUrl, setNextUrl] = useState<string | null>(null);
+
+  // carry ?next= (e.g. from a book's Unlock → /coins?...&book=) through to login
+  useEffect(() => {
+    const n = new URLSearchParams(window.location.search).get("next");
+    if (n && n.startsWith("/")) setNextUrl(n);
+  }, []);
+  const loginHref = `/login?email=${encodeURIComponent(email)}${nextUrl ? `&next=${encodeURIComponent(nextUrl)}` : ""}`;
 
   const signup = async () => {
     setError(null);
@@ -38,7 +46,7 @@ export default function SignupPage() {
       // account created — send them to sign in
       setLoading(false);
       setRegistered(true);
-      setTimeout(() => { window.location.href = `/login?email=${encodeURIComponent(email)}`; }, 1500);
+      setTimeout(() => { window.location.href = loginHref; }, 1500);
     } catch {
       setLoading(false);
       setError("Network error. Please try again.");
@@ -114,7 +122,7 @@ export default function SignupPage() {
               <h2 className="mt-4 font-serif text-2xl font-semibold text-gray-900">Account created! 🎉</h2>
               <p className="mt-2 text-gray-500">Please sign in to continue. Redirecting…</p>
               <Loader2 className="mx-auto mt-5 h-6 w-6 animate-spin text-brand-500" />
-              <Link href={`/login?email=${encodeURIComponent(email)}`} className="mt-5 inline-block rounded-full bg-brand px-7 py-3 font-semibold text-white hover:bg-brand-600">Go to sign in</Link>
+              <Link href={loginHref} className="mt-5 inline-block rounded-full bg-brand px-7 py-3 font-semibold text-white hover:bg-brand-600">Go to sign in</Link>
             </div>
           ) : (
             <div className="rounded-3xl bg-white p-6 shadow-card ring-1 ring-black/5 sm:p-8">
@@ -166,7 +174,7 @@ export default function SignupPage() {
           )}
 
           <p className="mt-6 text-center text-sm text-gray-500">
-            Already have an account? <Link href="/login" className="font-semibold text-brand-700 hover:underline">Sign in</Link>
+            Already have an account? <Link href={nextUrl ? `/login?next=${encodeURIComponent(nextUrl)}` : "/login"} className="font-semibold text-brand-700 hover:underline">Sign in</Link>
           </p>
         </div>
       </div>

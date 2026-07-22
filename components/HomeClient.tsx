@@ -2,11 +2,12 @@
 
 import type { ReactNode } from "react";
 import type { Book, Category, Subcategory } from "@/lib/types";
-import type { HomeSection, Faq, FeaturedBook, Testimonial } from "@/lib/queries";
+import type { HomeSection, Faq, FeaturedBook, Testimonial, PopularAuthor, HeroFeature } from "@/lib/queries";
 import LandingHero from "./LandingHero";
 import SignedInHero from "./SignedInHero";
 import MarketingSections from "./MarketingSections";
 import FeaturedBooks from "./FeaturedBooks";
+import AuthorsCarousel from "./AuthorsCarousel";
 import Curve from "./Curve";
 import Carousel from "./Carousel";
 import CategorySelector from "./CategorySelector";
@@ -58,6 +59,8 @@ export default function HomeClient({
   faqs,
   featuredBooks = [],
   testimonials = [],
+  popularAuthors = [],
+  heroFeature = null,
 }: {
   signedIn: boolean;
   sections: HomeSection[];
@@ -67,6 +70,8 @@ export default function HomeClient({
   faqs?: Faq[];
   featuredBooks?: FeaturedBook[];
   testimonials?: Testimonial[];
+  popularAuthors?: PopularAuthor[];
+  heroFeature?: HeroFeature | null;
 }) {
 
   // Build the app-home feed in the desired order.
@@ -78,7 +83,7 @@ export default function HomeClient({
     key: s.id,
     node: (
       <div className="mx-auto max-w-[96rem]">
-        <Carousel eyebrow={EYEBROWS[s.type]} title={s.title} subtitle={SUBTITLES[s.type]} books={s.books} />
+        <Carousel eyebrow={EYEBROWS[s.type]} title={s.title} subtitle={s.type === "books_of_month" ? undefined : SUBTITLES[s.type]} books={s.books} />
       </div>
     ),
   });
@@ -87,45 +92,49 @@ export default function HomeClient({
   // 1. Books of the Month
   const bom = feedSections.find((s) => s.type === "books_of_month");
   if (bom) blocks.push(carouselBlock(bom));
-  // 2. Featured Books
+  // 2. Recommended for You (signed-in, from selected categories, weekly)
+  const rec = feedSections.find((s) => s.type === "recommended");
+  if (rec) blocks.push(carouselBlock(rec));
+  // 3. Featured Books
   if (featuredBooks.length > 0) blocks.push({ key: "featured", node: <FeaturedBooks featured={featuredBooks} /> });
-  // 3. the rest (most popular → recently added → Urdu → …)
-  feedSections.filter((s) => s.type !== "books_of_month").forEach((s) => blocks.push(carouselBlock(s)));
-  // 4. Browse by interest
-  if (categories.length > 0) {
-    blocks.push({
-      key: "categories",
-      node: (
-        <div id="browse-categories" className="mx-auto max-w-[96rem] scroll-mt-24">
-          <CategorySelector categories={categories} subcategories={subcategories} books={allBooks} />
-        </div>
-      ),
-    });
-  }
+  // 4. the rest (most popular → recently added → Urdu → …)
+  feedSections.filter((s) => s.type !== "books_of_month" && s.type !== "recommended").forEach((s) => blocks.push(carouselBlock(s)));
+  // 5. Popular authors
+  if (popularAuthors.length > 0) blocks.push({ key: "authors", node: <AuthorsCarousel authors={popularAuthors} /> });
+
+  // Browse by interest — in the feed for signed-in users; for signed-out it
+  // moves below the "Why ZaraSuno?" section (rendered separately, further down).
+  const browseNode =
+    categories.length > 0 ? (
+      <div id="browse-categories" className="mx-auto max-w-[96rem] scroll-mt-24">
+        <CategorySelector categories={categories} subcategories={subcategories} books={allBooks} />
+      </div>
+    ) : null;
+  // 6. Browse by interest (signed-in only here)
+  if (signedIn && browseNode) blocks.push({ key: "categories", node: browseNode });
 
   return (
     <>
-      {signedIn ? (
-        <SignedInHero />
-      ) : (
-        <>
-          <LandingHero covers={allBooks} />
-          <MarketingSections />
-        </>
-      )}
+      {signedIn ? <SignedInHero /> : <LandingHero covers={allBooks} heroFeature={heroFeature} />}
 
       {/* App-home feed — one connected white surface */}
       <div id="app-home" className="relative bg-white">
         <Curve fill="#ffffff" />
-        <div className="space-y-16 py-16">
+        <div className="space-y-10 py-12">
           {blocks.map((b) => (
             <Reveal key={b.key}>{b.node}</Reveal>
           ))}
         </div>
       </div>
 
-      {/* Reviews + FAQ — just above the footer (shown for everyone) */}
-      <ReviewsFaq faqs={faqs} testimonials={testimonials} />
+      {/* Signed-out tail — order: Browse by interest → Why ZaraSuno → Reviews → FAQ */}
+      {!signedIn && (
+        <>
+          {browseNode && <div className="bg-white py-12">{browseNode}</div>}
+          <MarketingSections />
+          <ReviewsFaq faqs={faqs} testimonials={testimonials} />
+        </>
+      )}
 
       <OnboardingModal categories={categories} />
     </>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Home, Library, User, Coins, Menu, X, LogIn } from "lucide-react";
+import { Home, Library, User, Coins, Menu, X, LogIn, Search } from "lucide-react";
 import Logo from "./Logo";
 import NotificationBell from "./NotificationBell";
 import SearchBar from "./SearchBar";
@@ -14,6 +14,14 @@ const NAV = [
   { href: "/", label: "Home", icon: Home },
   { href: "/library", label: "Library", icon: Library },
   { href: "/coins", label: "Coins", icon: Coins },
+];
+
+// bottom mobile tabs (signed-in) — Coins replaced with Explore (search)
+const BOTTOM_TABS = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/explore", label: "Explore", icon: Search },
+  { href: "/library", label: "Library", icon: Library },
+  { href: "/profile", label: "Profile", icon: User },
 ];
 
 export default function Navbar() {
@@ -168,7 +176,7 @@ export default function Navbar() {
       {signedIn && (
         <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/10 bg-brand-900/95 backdrop-blur md:hidden">
           <div className="grid grid-cols-4">
-            {navItems.map(({ href, label, icon: Icon }) => {
+            {BOTTOM_TABS.map(({ href, label, icon: Icon }) => {
               const active = pathname === href;
               return (
                 <Link key={href} href={href} className={cn("flex flex-col items-center gap-1 py-2.5 text-[11px] font-semibold", active ? "text-gold-300" : "text-white/55")}>

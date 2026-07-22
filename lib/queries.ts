@@ -53,6 +53,104 @@ export async function getAllBooks(): Promise<Book[]> {
   return (data ?? []).map(mapBook);
 }
 
+export interface HeroFeature {
+  book_id: string;
+  title: string;
+  author_name: string | null;
+  cover_url: string;
+  sample_audio_url: string | null;
+  sample_label: string;
+}
+
+// Admin-managed book shown inside the landing-hero phone (real book + ~1-min
+// audio sample). Returns the first active row, or null to fall back to a cover.
+export async function getHeroFeature(): Promise<HeroFeature | null> {
+  const db = createClient();
+  const { data } = await db
+    .from("hero_features")
+    .select("book_id, sample_audio_url, sample_label, books(title, cover_url, authors!books_author_id_fkey(name))")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data || !data.book_id || !(data as any).books) return null;
+  const b: any = (data as any).books;
+  return {
+    book_id: data.book_id,
+    title: b.title,
+    author_name: b.authors?.name ?? null,
+    cover_url: b.cover_url || `https://picsum.photos/seed/${data.book_id}/600/600`,
+    sample_audio_url: (data as any).sample_audio_url ?? null,
+    sample_label: (data as any).sample_label ?? "Free 1-min sample",
+  };
+}
+
+export interface PopularAuthor {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  book_count: number;
+}
+
+// Every author who has at least one published book (as primary OR co-author),
+// ranked by total listens then book count.
+export async function getPopularAuthors(): Promise<PopularAuthor[]> {
+  const db = createClient();
+  const { data: books } = await db
+    .from("books")
+    .select("author_id, author_2_id, author_3_id, author_4_id, listen_count")
+    .eq("is_published", true);
+  const agg: Record<string, { count: number; listens: number }> = {};
+  for (const b of books ?? []) {
+    const ids = new Set([b.author_id, b.author_2_id, b.author_3_id, b.author_4_id].filter(Boolean));
+    for (const id of ids) {
+      agg[id] = agg[id] || { count: 0, listens: 0 };
+      agg[id].count += 1;
+      agg[id].listens += b.listen_count ?? 0;
+    }
+  }
+  const ids = Object.keys(agg);
+  if (!ids.length) return [];
+  const { data: authors } = await db.from("authors").select("id, name, avatar_url").in("id", ids);
+  return (authors ?? [])
+    .map((a: any) => ({ id: a.id, name: a.name, avatar_url: a.avatar_url ?? null, book_count: agg[a.id].count, listens: agg[a.id].listens }))
+    .sort((x: any, y: any) => y.listens - x.listens || y.book_count - x.book_count)
+    .slice(0, 20)
+    .map(({ id, name, avatar_url, book_count }) => ({ id, name, avatar_url, book_count }));
+}
+
+// Every author with at least one published book, sorted A→Z by name — for the
+// "Browse by author" page (grouped alphabetically).
+export async function getAllAuthors(): Promise<PopularAuthor[]> {
+  const db = createClient();
+  const { data: books } = await db
+    .from("books")
+    .select("author_id, author_2_id, author_3_id, author_4_id")
+    .eq("is_published", true);
+  const count: Record<string, number> = {};
+  for (const b of books ?? []) {
+    const ids = new Set([b.author_id, b.author_2_id, b.author_3_id, b.author_4_id].filter(Boolean));
+    for (const id of ids) count[id] = (count[id] || 0) + 1;
+  }
+  const ids = Object.keys(count);
+  if (!ids.length) return [];
+  const { data: authors } = await db.from("authors").select("id, name, avatar_url").in("id", ids);
+  return (authors ?? [])
+    .map((a: any) => ({ id: a.id, name: a.name, avatar_url: a.avatar_url ?? null, book_count: count[a.id] }))
+    .sort((x, y) => x.name.localeCompare(y.name, undefined, { sensitivity: "base" }));
+}
+
+export async function getBooksByAuthor(authorId: string): Promise<Book[]> {
+  const db = createClient();
+  const { data } = await db
+    .from("books")
+    .select(BOOK_SELECT)
+    .or(`author_id.eq.${authorId},author_2_id.eq.${authorId},author_3_id.eq.${authorId},author_4_id.eq.${authorId}`)
+    .eq("is_published", true);
+  return (data ?? []).map(mapBook);
+}
+
 export async function getCategories(): Promise<Category[]> {
   const db = createClient();
   const { data } = await db.from("categories").select("*").eq("is_active", true).order("sort_order");
@@ -105,7 +203,24 @@ export interface HomeSection {
   books: Book[];
 }
 
-export async function getHomeSections(signedIn: boolean): Promise<HomeSection[]> {
+// deterministic shuffle so a list is stable within a period but rotates by seed
+function seededShuffle<T>(arr: T[], seed: number): T[] {
+  const a = [...arr];
+  let s = (seed || 1) % 2147483647;
+  if (s <= 0) s += 2147483646;
+  const rand = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+export async function getHomeSections(
+  signedIn: boolean,
+  selectedCategoryIds: string[] = [],
+  selectedLanguageCodes: string[] = []
+): Promise<HomeSection[]> {
   const db = createClient();
   const [{ data: carousels }, books] = await Promise.all([
     db.from("home_carousels").select("*").eq("is_active", true).order("sort_order"),
@@ -114,10 +229,15 @@ export async function getHomeSections(signedIn: boolean): Promise<HomeSection[]>
 
   const byId = new Map(books.map((b) => [b.id, b]));
   const subs = await getSubcategories();
+  const weekSeed = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000)); // changes weekly
 
   const sections: HomeSection[] = [];
   for (const c of carousels ?? []) {
     if (c.requires_auth && !signedIn) continue;
+    // language-gated carousels: hide from signed-in users who picked languages
+    // that don't include this one (they still show for guests / no-pref users).
+    if (c.type === "language" && signedIn && selectedLanguageCodes.length > 0 && c.language_code && !selectedLanguageCodes.includes(c.language_code)) continue;
+
     let list: Book[] = [];
     switch (c.type) {
       case "books_of_month":
@@ -129,9 +249,17 @@ export async function getHomeSections(signedIn: boolean): Promise<HomeSection[]>
       case "most_popular":
         list = [...books].sort((a, b) => b.listen_count - a.listen_count);
         break;
-      case "recommended":
-        list = books.filter((b) => b.is_recommended);
+      case "recommended": {
+        // based on the user's selected categories, randomised, rotating weekly
+        if (selectedCategoryIds.length > 0) {
+          const subIds = subs.filter((s) => selectedCategoryIds.includes(s.category_id)).map((s) => s.id);
+          const pool = books.filter((b) => subIds.includes(b.subcategory_id));
+          list = seededShuffle(pool.length ? pool : books.filter((b) => b.is_recommended), weekSeed);
+        } else {
+          list = books.filter((b) => b.is_recommended);
+        }
         break;
+      }
       case "top_selling":
         list = books.filter((b) => b.is_top_selling);
         break;
