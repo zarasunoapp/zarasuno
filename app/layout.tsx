@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   description:
     "Audiobooks & book summaries in English and Urdu. Unlock with coins, listen chapter by chapter.",
   icons: {
-    icon: "/images/favicon.jpeg",
-    shortcut: "/images/favicon.jpeg",
-    apple: "/images/favicon.jpeg",
+    icon: [{ url: "/images/favicon.png", type: "image/png", sizes: "512x512" }],
+    shortcut: "/images/favicon.png",
+    apple: [{ url: "/images/apple-icon.png", type: "image/png", sizes: "512x512" }],
   },
 };
 
