@@ -117,7 +117,7 @@ export async function getPopularAuthors(): Promise<PopularAuthor[]> {
     .map((a: any) => ({ id: a.id, name: a.name, avatar_url: a.avatar_url ?? null, book_count: agg[a.id].count, listens: agg[a.id].listens }))
     .sort((x: any, y: any) => y.listens - x.listens || y.book_count - x.book_count)
     .slice(0, 20)
-    .map(({ id, name, avatar_url, book_count }) => ({ id, name, avatar_url, book_count }));
+    .map(({ id, name, avatar_url, book_count }: any) => ({ id, name, avatar_url, book_count }));
 }
 
 // Every author with at least one published book, sorted A→Z by name — for the
@@ -138,7 +138,7 @@ export async function getAllAuthors(): Promise<PopularAuthor[]> {
   const { data: authors } = await db.from("authors").select("id, name, avatar_url").in("id", ids);
   return (authors ?? [])
     .map((a: any) => ({ id: a.id, name: a.name, avatar_url: a.avatar_url ?? null, book_count: count[a.id] }))
-    .sort((x, y) => x.name.localeCompare(y.name, undefined, { sensitivity: "base" }));
+    .sort((x: any, y: any) => x.name.localeCompare(y.name, undefined, { sensitivity: "base" }));
 }
 
 export async function getBooksByAuthor(authorId: string): Promise<Book[]> {

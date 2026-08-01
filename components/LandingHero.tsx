@@ -41,7 +41,9 @@ export default function LandingHero({ covers, heroFeature }: { covers: Book[]; h
             to read.
           </h1>
 
-          
+          <p className="mx-auto mt-6 max-w-xl text-lg text-brand-100 lg:mx-0">
+            Audiobooks and book summaries in English and Urdu — ready to listen to whenever you are.
+          </p>
 
           <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
             {/* Start listening free — with a floating "+50 free coins" popup */}
@@ -73,14 +75,19 @@ export default function LandingHero({ covers, heroFeature }: { covers: Book[]; h
 
           {/* phone — real, admin-selected book with a playable 1-min sample */}
           {phone && (
-            <HeroPhone
-              bookId={phone.bookId}
-              title={phone.title}
-              author={phone.author}
-              coverUrl={phone.coverUrl}
-              sampleUrl={phone.sampleUrl}
-              sampleLabel={phone.sampleLabel}
-            />
+            <div className="relative flex flex-col items-center gap-4">
+              <span className="animate-float inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-gold-200 ring-1 ring-white/15 backdrop-blur">
+                <Play className="h-3.5 w-3.5 fill-current" /> Tap play to hear a free sample
+              </span>
+              <HeroPhone
+                bookId={phone.bookId}
+                title={phone.title}
+                author={phone.author}
+                coverUrl={phone.coverUrl}
+                sampleUrl={phone.sampleUrl}
+                sampleLabel={phone.sampleLabel}
+              />
+            </div>
           )}
 
           {/* floating chips */}

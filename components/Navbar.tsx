@@ -82,12 +82,12 @@ export default function Navbar() {
             })}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <SearchBar />
             {signedIn ? (
               <>
                 <NotificationBell light />
-                <Link href="/coins" className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-gold-300 ring-1 ring-white/15 transition hover:bg-white/20">
+                <Link href="/coins" className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1.5 text-sm font-bold text-gold-300 ring-1 ring-white/15 transition hover:bg-white/20 sm:gap-1.5 sm:px-3">
                   <Coins className="h-4 w-4" />
                   {coins}
                 </Link>
@@ -106,7 +106,15 @@ export default function Navbar() {
               </>
             )}
 
-            <button onClick={() => setOpen(true)} className="grid h-9 w-9 place-items-center rounded-full text-white transition hover:bg-white/10 lg:hidden">
+            {/* Hamburger: signed-in mobile uses the bottom tab bar instead, so
+                only show it there on tablet (md–lg). Signed-out shows it below lg. */}
+            <button
+              onClick={() => setOpen(true)}
+              className={cn(
+                "h-9 w-9 place-items-center rounded-full text-white transition hover:bg-white/10",
+                signedIn ? "hidden md:grid lg:hidden" : "grid lg:hidden"
+              )}
+            >
               <Menu className="h-5 w-5" />
             </button>
           </div>

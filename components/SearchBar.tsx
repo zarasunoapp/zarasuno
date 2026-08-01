@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, X, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { cn } from "@/lib/utils";
 
 type Item = { id: string; title: string; cover_url: string; author: string; category: string };
 
@@ -18,7 +18,20 @@ export default function SearchBar() {
   const [loading, setLoading] = useState(false);
   const [openDesktop, setOpenDesktop] = useState(false);
   const [openMobile, setOpenMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => setMounted(true), []);
+
+  // close the mobile sheet on Escape + lock body scroll while it's open
+  useEffect(() => {
+    if (!openMobile) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpenMobile(false);
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [openMobile]);
 
   // close the desktop dropdown when clicking/tapping anywhere outside it
   useEffect(() => {
@@ -129,8 +142,11 @@ export default function SearchBar() {
         <Search className="h-[18px] w-[18px]" />
       </button>
 
-      {openMobile && (
-        <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm" onClick={() => setOpenMobile(false)}>
+      {/* Portal to <body> so the fixed overlay covers the whole viewport — the
+          header's backdrop-blur would otherwise trap `fixed` to the header box,
+          leaving page taps unable to dismiss it. */}
+      {mounted && openMobile && createPortal(
+        <div className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm" onClick={() => setOpenMobile(false)}>
           <div className="mx-auto mt-16 w-[92%] max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2 border-b border-gray-100 px-3 py-2.5">
               <Search className="h-4 w-4 shrink-0 text-gray-400" />
@@ -139,7 +155,7 @@ export default function SearchBar() {
                 value={q}
                 onChange={(e) => { setQ(e.target.value); load(); }}
                 onKeyDown={(e) => e.key === "Enter" && goFirst()}
-                placeholder="Search books, authors, categories…"
+                placeholder="Search by title, author, or keywords…"
                 className="w-full py-1.5 text-sm outline-none"
               />
               <button onClick={() => setOpenMobile(false)} className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-gray-400 hover:bg-gray-100">
@@ -150,7 +166,8 @@ export default function SearchBar() {
               <Suggestions onPick={() => setOpenMobile(false)} />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

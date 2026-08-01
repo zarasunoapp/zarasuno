@@ -15,6 +15,9 @@ body {
   background: #ffffff;
   color: #14211d;
   -webkit-font-smoothing: antialiased;
+  /* clip any stray horizontal overflow (full-bleed heroes, glows) without
+     creating a scroll container — keeps `position: sticky` on the navbar working */
+  overflow-x: clip;
 }
 
 /* Hide scrollbars on horizontal carousels but keep scroll */

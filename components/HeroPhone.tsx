@@ -125,7 +125,7 @@ export default function HeroPhone({
             href={`/book/${bookId}`}
             className="mt-4 flex items-center justify-center gap-1.5 rounded-2xl bg-brand-900 py-2.5 text-[13px] font-semibold text-white transition hover:bg-brand-800"
           >
-            Explore this full book <ArrowRight className="h-4 w-4" />
+            Listen to full book <ArrowRight className="h-4 w-4" />
           </Link>
         ) : (
           <div className="mt-4 flex items-center justify-center gap-1.5 rounded-2xl bg-brand-50 py-2.5 text-[11px] font-medium text-brand-700 ring-1 ring-brand-100">

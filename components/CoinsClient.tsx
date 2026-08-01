@@ -89,6 +89,7 @@ function Inner({ packages, configs, country }: { packages: CoinPackage[]; config
   // wallet / transaction history (coin purchases + book unlocks), newest first
   type Txn = { id: string; type: string; coins: number; created_at: string; title: string | null; amount: number | null; currency: string | null; status: string | null };
   const [wallet, setWallet] = useState<Txn[] | null>(null);
+  const [walletTab, setWalletTab] = useState<"coins" | "books">("coins");
   useEffect(() => {
     if (!signedIn) { setWallet([]); return; }
     (async () => {
@@ -213,24 +214,41 @@ function Inner({ packages, configs, country }: { packages: CoinPackage[]; config
         )}
       </div>
 
-      {/* Wallet / transaction history — coin purchases + book unlocks */}
-      {signedIn && (
+      {/* Wallet / transaction history — split into Coin purchases + Book purchases */}
+      {signedIn && (() => {
+        const coinRows = (wallet ?? []).filter((t) => t.type !== "spend");   // top-ups, promos, grants
+        const bookRows = (wallet ?? []).filter((t) => t.type === "spend");   // unlocks
+        const rows = walletTab === "coins" ? coinRows : bookRows;
+        const tabCls = (active: boolean) =>
+          cn("flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition",
+             active ? "bg-brand-900 text-white shadow" : "bg-gray-50 text-brand-700 ring-1 ring-gray-200 hover:bg-brand-50");
+        return (
         <div className="mt-6 overflow-hidden rounded-3xl bg-white shadow-card ring-1 ring-black/5">
-          <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4 sm:px-6">
+          <div className="flex flex-wrap items-center gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-50 text-brand-700"><History className="h-5 w-5" /></div>
-            <div>
+            <div className="mr-auto">
               <h3 className="text-base font-bold text-gray-900">Wallet history</h3>
-              <p className="text-xs text-gray-400">Your coin purchases and unlocked books</p>
+              <p className="text-xs text-gray-400">Your coin top-ups and unlocked books</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setWalletTab("coins")} className={tabCls(walletTab === "coins")}>
+                <Receipt className="h-4 w-4" /> Coin purchases
+              </button>
+              <button onClick={() => setWalletTab("books")} className={tabCls(walletTab === "books")}>
+                <BookLock className="h-4 w-4" /> Book purchases
+              </button>
             </div>
           </div>
 
           {wallet === null ? (
             <PageLoader variant="inline" label="Loading history…" />
-          ) : wallet.length === 0 ? (
-            <div className="px-6 py-10 text-center text-sm text-gray-400">No transactions yet. Buy coins to get started.</div>
+          ) : rows.length === 0 ? (
+            <div className="px-6 py-10 text-center text-sm text-gray-400">
+              {walletTab === "coins" ? "No coin purchases yet. Buy coins to get started." : "No books unlocked yet."}
+            </div>
           ) : (
             <ul className="no-scrollbar max-h-80 divide-y divide-gray-50 overflow-y-auto">
-              {wallet.map((t) => {
+              {rows.map((t) => {
                 const isUnlock = t.type === "spend";
                 const label = isUnlock
                   ? (t.title ? `Unlocked · ${t.title}` : "Book unlocked")
@@ -261,7 +279,8 @@ function Inner({ packages, configs, country }: { packages: CoinPackage[]; config
             </ul>
           )}
         </div>
-      )}
+        );
+      })()}
 
       <h2 className="mt-10 display text-2xl text-gray-900 sm:text-3xl">Choose a coin pack</h2>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

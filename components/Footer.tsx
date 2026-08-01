@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { Facebook, Instagram } from "lucide-react";
 import Logo from "./Logo";
 import { createClient } from "@/lib/supabase/client";
+import { useStore } from "@/lib/store";
+import { cn } from "@/lib/utils";
 
 function TikTok({ className }: { className?: string }) {
   return (
@@ -29,6 +31,7 @@ type Socials = { facebook?: string; instagram?: string; twitter?: string; tiktok
 
 export default function Footer() {
   const pathname = usePathname();
+  const { signedIn } = useStore();
   const [socials, setSocials] = useState<Socials>({});
 
   useEffect(() => {
@@ -41,9 +44,10 @@ export default function Footer() {
   if (pathname?.endsWith("/listen") || pathname === "/login" || pathname === "/signup" || pathname === "/reset-password") return null;
 
   return (
-    <footer className="pb-24 md:pb-0">
-      {/* bottom bar */}
-      <div className="forest text-brand-100">
+    <footer>
+      {/* bottom bar — extend the green under the fixed mobile tab bar (signed-in
+          only) so there's no white gap below the footer */}
+      <div className={cn("forest text-brand-100", signedIn && "pb-20 md:pb-0")}>
         <div className="mx-auto grid max-w-[96rem] gap-8 px-4 py-12 sm:px-6 md:grid-cols-4">
           <div className="md:col-span-2">
             <Logo light />

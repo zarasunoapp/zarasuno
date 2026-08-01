@@ -79,14 +79,24 @@ export default function HomeClient({
     .filter((s) => s.type !== "category") // drop category carousels (e.g. "Self Development")
     .sort((a, b) => prio(a.type) - prio(b.type));
 
-  const carouselBlock = (s: HomeSection) => ({
-    key: s.id,
-    node: (
-      <div className="mx-auto max-w-[96rem]">
-        <Carousel eyebrow={EYEBROWS[s.type]} title={s.title} subtitle={s.type === "books_of_month" ? undefined : SUBTITLES[s.type]} books={s.books} />
-      </div>
-    ),
-  });
+  const carouselBlock = (s: HomeSection) => {
+    // Books of the Month: no subtitle for anyone; also drop the eyebrow line
+    // for signed-out visitors (cleaner first impression).
+    const isBom = s.type === "books_of_month";
+    return {
+      key: s.id,
+      node: (
+        <div className="mx-auto max-w-[96rem]">
+          <Carousel
+            eyebrow={isBom && !signedIn ? undefined : EYEBROWS[s.type]}
+            title={s.title}
+            subtitle={isBom ? undefined : SUBTITLES[s.type]}
+            books={s.books}
+          />
+        </div>
+      ),
+    };
+  };
 
   const blocks: { key: string; node: ReactNode }[] = [];
   // 1. Books of the Month

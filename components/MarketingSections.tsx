@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { Play, Compass, Headphones, Coins, Sparkles } from "lucide-react";
+import { Play, Compass, Headphones, Coins, Sparkles, ChevronRight } from "lucide-react";
 import Curve from "./Curve";
 
 const STEPS = [
-  { icon: Compass, title: "Discover", text: "Find handpicked books and summaries in English and Urdu." },
+  { icon: Compass, title: "Discover", text: "Find handpicked audiobooks and summaries in English and Urdu." },
   { icon: Headphones, title: "Listen first", text: "Hear a sample before you unlock." },
   { icon: Coins, title: "Unlock simply", text: "Use coins to access the books you want." },
   { icon: Sparkles, title: "Listen your way", text: "Listen wherever your day takes you." },
@@ -28,12 +28,20 @@ export default function MarketingSections() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {STEPS.map((s) => (
+          {STEPS.map((s, i) => (
             <div
               key={s.title}
               className="group relative overflow-hidden rounded-3xl bg-white/[0.06] p-6 ring-1 ring-white/10 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:bg-white/[0.1] hover:ring-gold-400/40"
             >
               <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gold-400/10 blur-2xl transition-opacity group-hover:opacity-100 sm:opacity-0" />
+              {/* step number */}
+              <span className="absolute right-4 top-4 grid h-7 w-7 place-items-center rounded-full bg-white/10 font-serif text-sm font-bold text-gold-200 ring-1 ring-white/15">
+                {i + 1}
+              </span>
+              {/* flow arrow into the next step (desktop, between the 4 columns) */}
+              {i < STEPS.length - 1 && (
+                <ChevronRight className="pointer-events-none absolute -right-3 top-1/2 z-10 hidden h-6 w-6 -translate-y-1/2 text-gold-400 lg:block" />
+              )}
               <span className="grid h-14 w-14 place-items-center rounded-2xl bg-gold-grad text-brand-900 shadow-gold transition-transform group-hover:scale-105">
                 <s.icon className="h-6 w-6" />
               </span>

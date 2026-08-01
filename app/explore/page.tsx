@@ -42,6 +42,9 @@ export default function ExplorePage() {
     [books, cat]
   );
 
+  // "default mode" = no search text and no active filter → show everything, hide count
+  const isSearching = q.trim() !== "" || cat !== "" || sub !== "" || quick !== "all";
+
   const results = useMemo(() => {
     if (!books) return [];
     const s = q.trim().toLowerCase();
@@ -63,7 +66,7 @@ export default function ExplorePage() {
   return (
     <div className="mx-auto max-w-[96rem] px-4 py-8 pb-28 sm:px-6 md:pb-12">
       <h1 className="display text-3xl text-gray-900 sm:text-4xl">Explore</h1>
-      <p className="mt-1 text-gray-500">Search by title, author, or category.</p>
+      <p className="mt-1 text-gray-500">Search by title, author, or keywords.</p>
 
       {/* search */}
       <div className="relative mt-5 max-w-2xl">
@@ -72,7 +75,7 @@ export default function ExplorePage() {
           autoFocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search books, authors, categories…"
+          placeholder="Search by title, author, or keywords…"
           className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-12 pr-11 text-sm shadow-soft outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-100"
         />
         {q && (
@@ -119,7 +122,9 @@ export default function ExplorePage() {
           </div>
         ) : (
           <>
-            <p className="mb-4 text-sm text-gray-400">{results.length} {results.length === 1 ? "result" : "results"}</p>
+            {isSearching && (
+              <p className="mb-4 text-sm text-gray-400">{results.length} {results.length === 1 ? "result" : "results"}</p>
+            )}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 lg:grid-cols-6">
               {results.map((b) => <BookCard key={b.id} book={b} fluid />)}
             </div>
