@@ -10,6 +10,8 @@ export default function Logo({ light = false }: { light?: boolean }) {
       <img
         src="/images/goldenlogo.png"
         alt="ZaraSuno"
+        width={162}
+        height={28}
         className="h-7 w-auto transition-transform group-hover:scale-105 sm:h-8"
       />
     </Link>

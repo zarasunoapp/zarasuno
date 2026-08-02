@@ -110,6 +110,7 @@ export default function Navbar() {
                 only show it there on tablet (md–lg). Signed-out shows it below lg. */}
             <button
               onClick={() => setOpen(true)}
+              aria-label="Open menu"
               className={cn(
                 "h-9 w-9 place-items-center rounded-full text-white transition hover:bg-white/10",
                 signedIn ? "hidden md:grid lg:hidden" : "grid lg:hidden"
@@ -139,7 +140,7 @@ export default function Navbar() {
       >
         <div className="mb-8 flex items-center justify-between">
           <Logo light />
-          <button onClick={() => setOpen(false)} className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20">
+          <button onClick={() => setOpen(false)} aria-label="Close menu" className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20">
             <X className="h-5 w-5" />
           </button>
         </div>

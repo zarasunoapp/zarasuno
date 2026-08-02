@@ -100,7 +100,7 @@ export default function SearchBar() {
             className="flex items-center gap-3 px-3 py-2.5 hover:bg-brand-50/60"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={r.cover_url} alt="" className="h-11 w-11 shrink-0 rounded-lg object-cover ring-1 ring-black/5" />
+            <img src={r.cover_url} alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-lg object-cover ring-1 ring-black/5" />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-gray-900">{r.title}</p>
               <p className="truncate text-xs text-gray-500">{r.author}{r.category ? ` · ${r.category}` : ""}</p>

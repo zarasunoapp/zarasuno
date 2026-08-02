@@ -47,7 +47,7 @@ export default function AuthorsCarousel({ authors }: { authors: PopularAuthor[] 
             <span className="relative rounded-full ring-2 ring-transparent transition group-hover:ring-brand-300">
               {a.avatar_url ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={a.avatar_url} alt={a.name} className="h-20 w-20 rounded-full object-cover ring-4 ring-white shadow-card sm:h-24 sm:w-24" />
+                <img src={a.avatar_url} alt={a.name} width={96} height={96} className="h-20 w-20 rounded-full object-cover ring-4 ring-white shadow-card sm:h-24 sm:w-24" />
               ) : (
                 <Avatar name={a.name} size={88} className="shadow-card ring-4 ring-white" />
               )}

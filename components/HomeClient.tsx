@@ -3,17 +3,21 @@
 import type { ReactNode } from "react";
 import type { Book, Category, Subcategory } from "@/lib/types";
 import type { HomeSection, Faq, FeaturedBook, Testimonial, PopularAuthor, HeroFeature } from "@/lib/queries";
+import dynamic from "next/dynamic";
 import LandingHero from "./LandingHero";
 import SignedInHero from "./SignedInHero";
-import MarketingSections from "./MarketingSections";
 import FeaturedBooks from "./FeaturedBooks";
 import AuthorsCarousel from "./AuthorsCarousel";
 import Curve from "./Curve";
 import Carousel from "./Carousel";
 import CategorySelector from "./CategorySelector";
 import OnboardingModal from "./OnboardingModal";
-import ReviewsFaq from "./ReviewsFaq";
 import Reveal from "./Reveal";
+
+// Below-the-fold, signed-out-only marketing — code-split so their JS doesn't
+// weigh down the initial load / block the main thread (still server-rendered).
+const MarketingSections = dynamic(() => import("./MarketingSections"));
+const ReviewsFaq = dynamic(() => import("./ReviewsFaq"));
 
 // Feed order: books of the month → featured → most popular → recently added →
 // language (Urdu) → everything else. Category carousels are dropped (users

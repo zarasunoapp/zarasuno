@@ -60,7 +60,7 @@ export default async function AuthorsPage() {
                   >
                     {a.avatar_url ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={a.avatar_url} alt={a.name} className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-white shadow-soft" />
+                      <img src={a.avatar_url} alt={a.name} width={48} height={48} className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-white shadow-soft" />
                     ) : (
                       <Avatar name={a.name} size={48} className="shrink-0 ring-2 ring-white shadow-soft" />
                     )}

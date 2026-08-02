@@ -585,7 +585,7 @@ function ManualPaymentModal({ config, pkg, amount, onClose, onDone }: { config: 
           {preview ? (
             <div className="flex items-center gap-3 rounded-xl border border-gray-200 p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="Payment screenshot" className="h-16 w-16 shrink-0 rounded-lg object-cover ring-1 ring-black/5" />
+              <img src={preview} alt="Payment screenshot" width={64} height={64} className="h-16 w-16 shrink-0 rounded-lg object-cover ring-1 ring-black/5" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-gray-800">{file?.name}</p>
                 <p className="text-xs text-gray-400">{file ? Math.round(file.size / 1024) : 0} KB</p>

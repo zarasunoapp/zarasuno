@@ -21,7 +21,7 @@ export default async function AuthorPage({ params }: { params: { id: string } })
       <div className="mt-6 flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:text-left">
         {author.avatar_url ? (
           /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={author.avatar_url} alt={author.name} className="h-24 w-24 rounded-full object-cover shadow-card ring-4 ring-white" />
+          <img src={author.avatar_url} alt={author.name} width={96} height={96} className="h-24 w-24 rounded-full object-cover shadow-card ring-4 ring-white" />
         ) : (
           <Avatar name={author.name} size={96} className="shadow-card ring-4 ring-white" />
         )}

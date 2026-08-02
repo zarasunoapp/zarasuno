@@ -67,7 +67,7 @@ export default function ReviewsFaq({ faqs, testimonials }: { faqs?: Faq[]; testi
                   <figcaption className="mt-5 flex items-center gap-3 border-t border-gray-100 pt-4">
                     {r.avatar ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={r.avatar} alt={r.name} className="h-10 w-10 rounded-full object-cover" />
+                      <img src={r.avatar} alt={r.name} width={40} height={40} className="h-10 w-10 rounded-full object-cover" />
                     ) : (
                       <span className="grid h-10 w-10 place-items-center rounded-full bg-brand text-sm font-bold text-white">
                         {r.name.charAt(0)}
