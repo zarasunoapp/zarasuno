@@ -80,7 +80,10 @@ export default function SearchBar() {
     }
   };
 
-  const Suggestions = ({ onPick }: { onPick: () => void }) => (
+  // Rendered as a plain function call (not <Suggestions/>) so it stays part of
+  // the same fiber tree and just updates — using it as a JSX element would give
+  // it a new identity each render and remount the whole list on every keystroke.
+  const renderSuggestions = (onPick: () => void) => (
     <>
       {loading && !all ? (
         <div className="flex items-center gap-2 px-4 py-6 text-sm text-gray-400"><Loader2 className="h-4 w-4 animate-spin" /> Loading books…</div>
@@ -122,13 +125,18 @@ export default function SearchBar() {
           className="w-56 rounded-full border border-white/15 bg-white/10 py-2 pl-9 pr-8 text-sm text-white placeholder:text-white/50 outline-none transition focus:w-72 focus:bg-white/15"
         />
         {q && (
-          <button onClick={() => setQ("")} className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-white/60 hover:bg-white/10">
+          <button
+            type="button"
+            aria-label="Clear search"
+            onPointerDown={(e) => { e.preventDefault(); setQ(""); }}
+            className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full text-white/60 hover:bg-white/10"
+          >
             <X className="h-3.5 w-3.5" />
           </button>
         )}
         {openDesktop && (
           <div className="absolute left-0 top-12 z-50 w-80 overflow-hidden rounded-2xl bg-white py-1 shadow-2xl ring-1 ring-black/10">
-            <Suggestions onPick={() => setOpenDesktop(false)} />
+            {renderSuggestions(() => setOpenDesktop(false))}
           </div>
         )}
       </div>
@@ -146,8 +154,11 @@ export default function SearchBar() {
           header's backdrop-blur would otherwise trap `fixed` to the header box,
           leaving page taps unable to dismiss it. */}
       {mounted && openMobile && createPortal(
-        <div className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm" onClick={() => setOpenMobile(false)}>
-          <div className="mx-auto mt-16 w-[92%] max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm"
+          onPointerDown={() => setOpenMobile(false)}
+        >
+          <div className="mx-auto mt-16 w-[92%] max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl" onPointerDown={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2 border-b border-gray-100 px-3 py-2.5">
               <Search className="h-4 w-4 shrink-0 text-gray-400" />
               <input
@@ -158,12 +169,17 @@ export default function SearchBar() {
                 placeholder="Search by title, author, or keywords…"
                 className="w-full py-1.5 text-sm outline-none"
               />
-              <button onClick={() => setOpenMobile(false)} className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-gray-400 hover:bg-gray-100">
+              <button
+                type="button"
+                aria-label="Close search"
+                onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMobile(false); }}
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-gray-400 hover:bg-gray-100"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="no-scrollbar max-h-[60vh] overflow-y-auto">
-              <Suggestions onPick={() => setOpenMobile(false)} />
+              {renderSuggestions(() => setOpenMobile(false))}
             </div>
           </div>
         </div>,

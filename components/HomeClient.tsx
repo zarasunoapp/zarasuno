@@ -79,6 +79,9 @@ export default function HomeClient({
     .filter((s) => s.type !== "category") // drop category carousels (e.g. "Self Development")
     .sort((a, b) => prio(a.type) - prio(b.type));
 
+  // Sections where each book card also shows the book's own subtitle.
+  const SUBTITLE_SECTIONS = new Set(["most_popular", "recently_added", "language"]);
+
   const carouselBlock = (s: HomeSection) => {
     // Books of the Month: no subtitle for anyone; also drop the eyebrow line
     // for signed-out visitors (cleaner first impression).
@@ -92,6 +95,7 @@ export default function HomeClient({
             title={s.title}
             subtitle={isBom ? undefined : SUBTITLES[s.type]}
             books={s.books}
+            showSubtitle={SUBTITLE_SECTIONS.has(s.type)}
           />
         </div>
       ),

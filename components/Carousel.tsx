@@ -10,11 +10,13 @@ export default function Carousel({
   subtitle,
   eyebrow,
   books,
+  showSubtitle = false,
 }: {
   title: string;
   subtitle?: string;
   eyebrow?: string;
   books: Book[];
+  showSubtitle?: boolean;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
 
@@ -64,7 +66,7 @@ export default function Carousel({
       >
         {books.map((b, i) => (
           <div key={b.id} className="snap-start">
-            <BookCard book={b} index={i} />
+            <BookCard book={b} index={i} showSubtitle={showSubtitle} />
           </div>
         ))}
       </div>

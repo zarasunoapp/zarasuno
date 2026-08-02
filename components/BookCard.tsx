@@ -16,7 +16,7 @@ const TYPE_BADGE = {
 
 // Compact card — cover fills most of the tile, then title / author with the
 // coin price + lock beside the title, and a content-type + duration badge row.
-export default function BookCard({ book, fluid = false }: { book: Book; index?: number; fluid?: boolean }) {
+export default function BookCard({ book, fluid = false, showSubtitle = false }: { book: Book; index?: number; fluid?: boolean; showSubtitle?: boolean }) {
   const { isFavourite, toggleFavourite, isBookUnlocked, signedIn, ready } = useStore();
   const fav = isFavourite(book.id);
   const unlocked = isBookUnlocked(book.id, book.is_free);
@@ -62,6 +62,9 @@ export default function BookCard({ book, fluid = false }: { book: Book; index?: 
               <Link href={`/book/${book.id}`}>
                 <h3 className="line-clamp-2 min-h-[2.4rem] text-[15px] font-bold leading-tight text-gray-900 transition-colors group-hover:text-brand-700">{book.title}</h3>
               </Link>
+              {showSubtitle && book.subtitle && (
+                <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-gray-500">{book.subtitle}</p>
+              )}
               <p className="mt-0.5 truncate text-xs font-semibold text-gray-600">{book.author_name}</p>
             </div>
 
