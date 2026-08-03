@@ -329,7 +329,9 @@ export async function getHomeSections(
     if (list.length && (c.type === "most_popular" || c.type === "recently_added" || c.type === "recommended")) {
       list = arrangeByType(list, weekSeed);
     }
-    if (list.length) sections.push({ id: c.id, title: c.title, type: c.type, books: list.slice(0, c.book_limit ?? 12) });
+    // Recently Added shows the newest 50 (by created_at); others use their limit.
+    const shown = c.type === "recently_added" ? 50 : (c.book_limit ?? 12);
+    if (list.length) sections.push({ id: c.id, title: c.title, type: c.type, books: list.slice(0, shown) });
   }
   return sections;
 }
