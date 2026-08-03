@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, X, Headphones, Baby } from "lucide-react";
+import { Search, X, Headphones, Baby, Languages } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import BookCard from "@/components/BookCard";
@@ -14,6 +14,7 @@ export default function ExplorePage() {
   const [q, setQ] = useState("");
   const [books, setBooks] = useState<Row[] | null>(null);
   const [quick, setQuick] = useState<"all" | "full" | "children">("all");
+  const [lang, setLang] = useState<"all" | "en" | "ur">("all"); // "all" = English & Urdu
   const [cat, setCat] = useState<string>("");
   const [sub, setSub] = useState<string>("");
 
@@ -43,7 +44,7 @@ export default function ExplorePage() {
   );
 
   // "default mode" = no search text and no active filter → show everything, hide count
-  const isSearching = q.trim() !== "" || cat !== "" || sub !== "" || quick !== "all";
+  const isSearching = q.trim() !== "" || cat !== "" || sub !== "" || quick !== "all" || lang !== "all";
 
   const results = useMemo(() => {
     if (!books) return [];
@@ -52,13 +53,14 @@ export default function ExplorePage() {
       const matchesQ = !s || b.title.toLowerCase().includes(s) || b._author.toLowerCase().includes(s) || b._category.toLowerCase().includes(s) || b._sub.toLowerCase().includes(s);
       const matchesCat = !cat || b._category === cat;
       const matchesSub = !sub || b._sub === sub;
+      const matchesLang = lang === "all" || b.language_code === lang;
       const matchesQuick =
         quick === "all" ? true :
         quick === "full" ? b.book_type === "audiobook" :
         /child|kid/i.test(`${b._category} ${b._sub}`); // "For children"
-      return matchesQ && matchesCat && matchesSub && matchesQuick;
+      return matchesQ && matchesCat && matchesSub && matchesLang && matchesQuick;
     });
-  }, [q, books, cat, sub, quick]);
+  }, [q, books, cat, sub, lang, quick]);
 
   const chip = (active: boolean) =>
     cn("shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition", active ? "bg-brand-900 text-white shadow" : "bg-gray-50 text-brand-700 ring-1 ring-gray-200 hover:bg-brand-50");
@@ -90,6 +92,14 @@ export default function ExplorePage() {
         <button onClick={() => setQuick("all")} className={chip(quick === "all")}>All</button>
         <button onClick={() => setQuick("full")} className={cn(chip(quick === "full"), "flex items-center gap-1.5")}><Headphones className="h-4 w-4" /> Full book</button>
         <button onClick={() => setQuick("children")} className={cn(chip(quick === "children"), "flex items-center gap-1.5")}><Baby className="h-4 w-4" /> For children</button>
+      </div>
+
+      {/* language filter */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-400"><Languages className="h-4 w-4" /> Language</span>
+        <button onClick={() => setLang("all")} className={chip(lang === "all")}>English &amp; Urdu</button>
+        <button onClick={() => setLang("en")} className={chip(lang === "en")}>English</button>
+        <button onClick={() => setLang("ur")} className={chip(lang === "ur")}>اردو · Urdu</button>
       </div>
 
       {/* categories */}

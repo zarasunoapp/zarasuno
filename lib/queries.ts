@@ -216,6 +216,37 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
+// Row curation for Most Popular / Recently Added / Recommended:
+//   • the first 4 slots are always audiobooks (never summaries),
+//   • audiobooks keep their popularity/recency order,
+//   • summaries are capped at ~15% of the row and sprinkled randomly after
+//     slot 4 (excess summaries drop out — those rows are audiobook-first),
+//   • everything else (ebooks) counts with the audiobooks.
+// Deterministic per `seed` so it's stable within a week and rotates weekly.
+function arrangeByType(list: Book[], seed: number): Book[] {
+  if (list.length <= 1) return list;
+  const summaries = list.filter((b) => b.book_type === "summary");
+  const others = list.filter((b) => b.book_type !== "summary");
+  if (!summaries.length || !others.length) return list;
+
+  const maxSummaries = Math.floor(list.length * 0.15);
+  if (maxSummaries <= 0) return others; // too short for any summary → audiobooks only
+
+  const picked = seededShuffle(summaries, seed).slice(0, maxSummaries);
+
+  let s = (seed || 1) % 2147483647;
+  if (s <= 0) s += 2147483646;
+  const rand = () => (s = (s * 16807) % 2147483647) / 2147483647;
+
+  const result = [...others]; // audiobooks, in order
+  for (const sum of picked) {
+    const minPos = Math.min(4, result.length); // never in the first 4
+    const pos = minPos + Math.floor(rand() * (result.length - minPos + 1));
+    result.splice(pos, 0, sum);
+  }
+  return result;
+}
+
 export async function getHomeSections(
   signedIn: boolean,
   selectedCategoryIds: string[] = [],
@@ -293,6 +324,10 @@ export async function getHomeSections(
       }
       default:
         list = books;
+    }
+    // audiobook-first curation (first 4 audiobooks, ≤15% summaries sprinkled after)
+    if (list.length && (c.type === "most_popular" || c.type === "recently_added" || c.type === "recommended")) {
+      list = arrangeByType(list, weekSeed);
     }
     if (list.length) sections.push({ id: c.id, title: c.title, type: c.type, books: list.slice(0, c.book_limit ?? 12) });
   }

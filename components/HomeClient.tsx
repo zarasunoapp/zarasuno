@@ -86,25 +86,20 @@ export default function HomeClient({
   // Sections where each book card also shows the book's own subtitle.
   const SUBTITLE_SECTIONS = new Set(["most_popular", "recently_added", "language"]);
 
-  const carouselBlock = (s: HomeSection) => {
-    // Books of the Month: no subtitle for anyone; also drop the eyebrow line
-    // for signed-out visitors (cleaner first impression).
-    const isBom = s.type === "books_of_month";
-    return {
-      key: s.id,
-      node: (
-        <div className="mx-auto max-w-[96rem]">
-          <Carousel
-            eyebrow={isBom && !signedIn ? undefined : EYEBROWS[s.type]}
-            title={s.title}
-            subtitle={isBom ? undefined : SUBTITLES[s.type]}
-            books={s.books}
-            showSubtitle={SUBTITLE_SECTIONS.has(s.type)}
-          />
-        </div>
-      ),
-    };
-  };
+  const carouselBlock = (s: HomeSection) => ({
+    key: s.id,
+    node: (
+      <div className="mx-auto max-w-[96rem]">
+        <Carousel
+          eyebrow={EYEBROWS[s.type]}
+          title={s.title}
+          subtitle={SUBTITLES[s.type]}
+          books={s.books}
+          showSubtitle={SUBTITLE_SECTIONS.has(s.type)}
+        />
+      </div>
+    ),
+  });
 
   const blocks: { key: string; node: ReactNode }[] = [];
   // 1. Books of the Month
