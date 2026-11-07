@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Play, Star, Sparkles, Coins, Globe, ArrowRight } from "lucide-react";
+import { Play, Star, Sparkles, Globe, ArrowRight } from "lucide-react";
 import type { Book } from "@/lib/types";
 import type { HeroFeature } from "@/lib/queries";
 import HeroPhone from "./HeroPhone";
@@ -46,12 +46,12 @@ export default function LandingHero({ covers, heroFeature }: { covers: Book[]; h
           </p>
 
           <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
-            {/* Start listening free — with a floating "+50 free coins" popup */}
+            {/* Start listening free — floating "+50 free coins" popup (hidden) */}
             <div className="relative w-full sm:w-auto">
-              <span className="animate-float absolute -top-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-brand-700 shadow-card ring-1 ring-black/5">
+              {/* <span className="animate-float absolute -top-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-brand-700 shadow-card ring-1 ring-black/5">
                 <Coins className="h-3.5 w-3.5 text-gold-500" /> +50 free coins
                 <span className="absolute -bottom-1 left-1/2 h-2.5 w-2.5 -translate-x-1/2 rotate-45 rounded-[2px] bg-white" />
-              </span>
+              </span> */}
               <Link href="/signup" className="btn-gold flex w-full items-center justify-center gap-2 rounded-full px-7 py-4 text-base font-semibold sm:w-auto">
                 <Play className="h-4 w-4 fill-current" /> Start listening free
               </Link>
